@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="André Victor Ribeiro Amaral" />
+
+
+<title>Spatio-temporal Point Pattern Data Analysis with Applications in Health Surveillance and Environmental Data</title>
+
+<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Point Pattern Data Analysis</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://avramaral.github.io/">
+    <span class="fa fa-globe"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Spatio-temporal Point Pattern Data Analysis with Applications in Health Surveillance and Environmental Data</h1>
+<h4 class="author">André Victor Ribeiro Amaral</h4>
+
+</div>
+
+
+<div id="abstract" class="section level1 unnumbered">
+<h1 class="unnumbered">Abstract</h1>
+<p>This tutorial aims to cover the basics of statistical point pattern data analysis using spatio-temporal point processes techniques for modeling disease-related and environmental data. In introductory spatial statistics courses, we usually study models to describe areal or geostatistical data. For the former, the domain is partitioned into a finite number of areas, and we model its spatial dependence by accounting for the neighbourhood structure. For the latter, we have a process defined on a continuous domain, but we only observe it at fixed and deterministic locations; therefore, our goal is to make inference for the non-observed regions. On the contrary, <strong>in point pattern data, the observations consist of a finite random subset of the domain</strong>; that is, the point locations are random, and, in that case, we are interested in modelling an underlying process that describes the intensity of the observed events. For instance, we can use point process models to describe the locations of infected individuals in a city, the position of a plant species in a large field, etc. A very simple point process model is the homogeneous Poisson process, and more elaborated models include the Cox process, Markov point process, etc. These models aim to capture different dependence structures, and inference techniques can be derived for each of them. This tutorial covers the introductory theory of point processes, and some important models for spatio-temporal problems. To do so, we will use the <a href="https://spatstat.org/"><code>spatstat</code></a> <code>R</code> package.</p>
+<p><br /></p>
+<blockquote>
+<p>This tutorial is based on the <a href="https://www.routledge.com/Spatial-Point-Patterns-Methodology-and-Applications-with-R/Baddeley-Rubak-Turner/p/book/9781482210200">Spatial Point Patterns: Methodology and Applications with <code>R</code></a> book.</p>
+</blockquote>
+</div>
+<div id="introduction" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Introduction</h1>
+<p>The first step is loading the <code>spatstat</code> (and others) package.</p>
+<pre class="r"><code>if (!require(&quot;spatstat&quot;)) {
+  install.packages(&quot;spatstat&quot;)
+  library(&quot;spatstat&quot;)
+}
+
+# Other packages
+library(&quot;spatstat.geom&quot;)
+library(&quot;inlabru&quot;)
+library(&quot;ggplot2&quot;)
+library(&quot;raster&quot;)
+library(&quot;rgeos&quot;)
+library(&quot;ggmap&quot;)
+library(&quot;INLA&quot;)
+library(&quot;tmap&quot;)
+library(&quot;sf&quot;)</code></pre>
+<p>From <code>spatstat</code> package, we can load different point pattern data sets. For instance, we can study the positions of 86 trees observed in a forest in New Zealand (area of approximately 153 by 85 feet).</p>
+<pre class="r"><code># ?nztrees
+nztrees</code></pre>
+<pre><code>## Planar point pattern: 86 points
+## window: rectangle = [0, 153] x [0, 95] feet</code></pre>
+<pre class="r"><code>plot(x = nztrees, main = &quot;New Zealand Trees&quot;, pch = 17,  col = &quot;lightgreen&quot;, cols = &quot;darkgreen&quot;, cex = 1.25)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>Or the location of people sitting on a grass patch in Gordon Square, London.</p>
+<pre class="r"><code># ?gordon
+gordon</code></pre>
+<pre><code>## Planar point pattern: 99 points
+## window: polygonal boundary
+## enclosing rectangle: [-26.408475, 26.408475] x [-36.32095, 36.32095] metres</code></pre>
+<pre class="r"><code>plot(x = gordon, main = &quot;People in Gordon Square&quot;,  col = &quot;lightblue&quot;, cols = &quot;blue&quot;, cex = 1.25)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Or the spatial locations of crimes reported in 2002, in an area of Chicago.</p>
+<pre class="r"><code># ?chicago
+chicago</code></pre>
+<pre><code>## Point pattern on linear network
+## 116 points
+## Multitype, with possible types: 
+##    assault burglary cartheft damage robbery theft trespass
+## Linear network with 338 vertices and 503 lines
+## Enclosing window: rectangle = [0.3894, 1281.9863] x [153.1035, 1276.5602] feet</code></pre>
+<pre class="r"><code>plot(chicago, main = &quot;Chicago Crime Data&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Or a randomly generated (and uniformly distributed) point pattern in a “InCoB2022” window.</p>
+<pre class="r"><code>set.seed(1)
+InCoB2022 &lt;- readRDS(file = &quot;data/InCoB2022.rds&quot;)
+class(InCoB2022)</code></pre>
+<pre><code>## [1] &quot;owin&quot;</code></pre>
+<pre class="r"><code>pp &lt;- rpoint(n = 100, f = 1, win = InCoB2022)
+plot(pp, main = &quot;Point pattern in the InCoB2022 window&quot;, pch = 21, col = &quot;white&quot;, cols = &quot;black&quot;, cex = 1.25)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Also, we can have <strong>marked point patterns</strong>. In that case, we also collect attributed for the observed locations.</p>
+<p>For instance, we can have the location of trees of four species in Hyytiälä, Finland. Here, we have a <strong>categorical variable</strong> as an attribute.</p>
+<pre class="r"><code># ?hyytiala
+hyytiala</code></pre>
+<pre><code>## Marked planar point pattern: 168 points
+## Multitype, with levels = aspen, birch, pine, rowan 
+## window: rectangle = [0, 20] x [0, 20] metres</code></pre>
+<pre class="r"><code>hyytiala$marks</code></pre>
+<pre><code>##   [1] pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine 
+##  [13] pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine 
+##  [25] pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine 
+##  [37] pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine 
+##  [49] pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine 
+##  [61] pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine 
+##  [73] pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine 
+##  [85] pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine 
+##  [97] pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine 
+## [109] pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine  pine 
+## [121] pine  pine  pine  pine  pine  pine  pine  pine  birch birch birch birch
+## [133] birch birch birch birch birch birch birch birch birch birch birch birch
+## [145] birch rowan rowan rowan rowan rowan rowan rowan rowan rowan rowan rowan
+## [157] rowan rowan rowan rowan rowan rowan rowan rowan rowan rowan rowan aspen
+## Levels: aspen birch pine rowan</code></pre>
+<pre class="r"><code>plot(hyytiala, main = &quot;Hyytiälä (Finland) Tress&quot;, col = &quot;lightgreen&quot;, cols = &quot;darkgreen&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Or the locations <strong>and sizes</strong> of Longleaf pine trees. Here, we have a <strong>continuous variable</strong> as an attribute.</p>
+<pre class="r"><code># ?longleaf
+longleaf</code></pre>
+<pre><code>## Marked planar point pattern: 584 points
+## marks are numeric, of storage type  &#39;double&#39;
+## window: rectangle = [0, 200] x [0, 200] metres</code></pre>
+<pre class="r"><code>longleaf$marks[1:20]</code></pre>
+<pre><code>##  [1] 32.9 53.5 68.0 17.7 36.9 51.6 66.4 17.7 21.9 25.7 25.5 28.3 11.2 33.8  2.5
+## [16]  4.2  2.5 31.2 16.4 53.2</code></pre>
+<pre class="r"><code>plot(longleaf, main = &quot;Longleaf Pine Tress&quot;, col = &quot;gray95&quot;, cols = &quot;darkgreen&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Finally, we may also have <strong>covariates</strong> for the observed region.</p>
+<p>For instance, we can observe the location of 3,605 trees in a tropical rain forest, but also analyze the <strong>elevation (altitude)</strong> in the study region.</p>
+<pre class="r"><code>plot(bei.extra$elev, main = &quot;Tropical rain forest trees (Altitude)&quot;)
+plot(bei, add = T, pch = 19)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+</div>
+<div id="basic-definitions" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Basic Definitions</h1>
+<p>If we want to understand and analyze point patterns we have to define the concept of a <strong>point process</strong>.</p>
+<blockquote>
+<p>Let <span class="math inline">\(x \in \mathcal{D} \subseteq \mathbb{R}^2\)</span>, such that <span class="math inline">\(\mathcal{D}\)</span> is the study domain. Then, a (spatial) <strong>point process</strong> <span class="math inline">\(\xi\)</span> is defined as a locally finite random subset of <span class="math inline">\(\mathcal{D}\)</span>; that is, <span class="math inline">\(\#(\xi \cap \text{D})\)</span> is finite for all bounded subsets <span class="math inline">\(\text{D} \subseteq \mathcal{D}\)</span>, such that <span class="math inline">\(\#(\text{A})\)</span> denotes de cardinality of <span class="math inline">\(\text{A}\)</span>.</p>
+</blockquote>
+<p><strong>Note:</strong> A spatio-temporal point process can be similarly defined, such that <span class="math inline">\(x \in \mathcal{D} \subseteq \mathbb{R}^2 \times \mathbb{R}\)</span>, where the third dimension denotes the time domain. Alternatively, one can also define a spatio-temporal point process as a marked one-dimensional process, where the marks denote the point locations in space. A deeper discussion on spatio-temporal point pattern modeling can be found in <a href="https://www.sciencedirect.com/science/article/pii/S2211675316301130">this paper</a>.</p>
+<p>In a nutshell, <strong>a point process is random mechanism whose outcome is a point pattern</strong>. In this regard, most of the time, <strong>we are not interested in the observed points themselves, instead, we want to answer questions about the way the points were generated</strong>.</p>
+<div id="intensity" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> Intensity</h2>
+<p>For a (spatial) point process, we may define an <strong>intensity function</strong> as follows</p>
+<blockquote>
+<p>Let <span class="math inline">\(\lambda: \mathcal{D} \rightarrow [0, +\infty)\)</span>, such that <span class="math inline">\(\int_{D}\lambda(x)dx &lt; +\infty\)</span>, for all bounded <span class="math inline">\(\text{D} \subseteq \mathcal{D}\)</span>. <span class="math inline">\(\lambda(x)\)</span> is the <strong>intensity function</strong> of a point process <span class="math inline">\(\xi\)</span>, if <span class="math display">\[\mathbb{E}[\#(\xi \cap \text{D})] = \int_{\text{D}}\lambda(x)dx, ~ \text{D} \subseteq \mathcal{D}.\]</span></p>
+</blockquote>
+<p>If <span class="math inline">\(\lambda(x) = \lambda\)</span>, <span class="math inline">\(\forall x\)</span>, that is, if it is a constant function, notice that <span class="math inline">\(\mathbb{E}[\#(\xi \cap \text{D})] = \lambda \cdot |\text{D}|\)</span>. In that case, <strong><span class="math inline">\(\lambda\)</span> denotes the average number of points per unit area</strong>.</p>
+<p>Also, the intensity function is closely related to the probability density.</p>
+<blockquote>
+<p>If <span class="math inline">\(\xi\)</span> is a point process with intensity function <span class="math inline">\(\lambda(x)\)</span> defined on <span class="math inline">\(\mathcal{D}\)</span>, then each individual point inside <span class="math inline">\(\mathcal{D}\)</span> has probability density <span class="math display">\[f(x) = \frac{\lambda(x)}{\Lambda_{\mathcal{D}}},\]</span> where <span class="math display">\[\Lambda_{\mathcal{D}} = \int_{\mathcal{D}}\lambda(x)dx.\]</span></p>
+</blockquote>
+<p>In <code>spatstat</code> we can generate a point pattern containing <span class="math inline">\(n\)</span> independent, identically distributed random points with intensity <span class="math inline">\(f\)</span> using the <code>rpoint()</code> function.</p>
+<pre class="r"><code>f &lt;- function (x, y) { (x^2 + y^2) }
+x &lt;- seq(-1, 1, 0.05)
+y &lt;- seq(-1, 1, 0.05)
+z &lt;- outer(X = x, Y = y, FUN = f)
+w &lt;- owin(xrange = c(-1, 1), yrange = c(-1, 1)) # Area: (2 units x 2 units)
+
+pp &lt;- rpoint(n = 2500, f = f, win = w)
+
+par(mfrow = c(1, 2))
+persp(x, y, z, theta = 30)
+plot(pp, main = &quot;&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<div id="estimating-the-intensity-function" class="section level3" number="2.1.1">
+<h3><span class="header-section-number">2.1.1</span> Estimating the intensity function</h3>
+<p>If the intensity function is assumed to be constant, we say we have a <strong>homogeneous process</strong>. In that case, <span class="math inline">\(\lambda\)</span> can be estimated as <span class="math display">\[\hat{\lambda} = \frac{\#(\mathbf{x})}{|\text{D}|},\]</span> where <span class="math inline">\(\mathbf{x}\)</span> is the point pattern data set, observed in a window <span class="math inline">\(\text{D}\)</span>.</p>
+<p>In <code>spatstat</code>, we can compute such a quantity using <code>intensity.ppp()</code>.</p>
+<pre class="r"><code>intensity.ppp(pp)</code></pre>
+<pre><code>## [1] 625</code></pre>
+<p>However, the homogeneous assumption may not hold. In that case, a simple way to check for non-homogeneity is to check whether regions of equal area contain roughly equal number of points. In <code>spatstat</code>, we can do this using the <code>quadratcount()</code> function.</p>
+<pre class="r"><code>q &lt;- quadratcount(X = pp, nx = 5, ny = 5)
+plot(q, main = &quot;&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>By visually inspecting the counts, we could argue that the process might not be homogeneous.</p>
+<p>However, to make it formal, we will conduct a statistical test. In particular, we will use a <span class="math inline">\(\chi^2\)</span> test for uniformity (i.e., testing homogeneity assuming independence). In <code>spatstat</code>, we can use the <code>quadrat.test()</code> function.</p>
+<pre class="r"><code>ts &lt;- quadrat.test(X = pp, nx = 5, ny = 5)
+ts</code></pre>
+<pre><code>## 
+##  Chi-squared test of CSR using quadrat counts
+## 
+## data:  pp
+## X2 = 894.68, df = 24, p-value &lt; 2.2e-16
+## alternative hypothesis: two.sided
+## 
+## Quadrats: 5 by 5 grid of tiles</code></pre>
+<p>As the p-value is too small (&lt; 2.2e-16), we <strong>reject</strong> the null hypothesis that <strong>the data pattern is a realization of a uniform Poisson point process</strong> (more about that later).</p>
+<hr />
+<p>If the process is assumed to non non-homogeneous, that is, if <span class="math inline">\(\lambda(x)\)</span> varies in space, the intensity function can be estimated non-parametrically by <strong>kernel estimation</strong>.</p>
+<blockquote>
+<p>Given a point pattern <span class="math inline">\(\mathbf{x} = (x_1, \cdots, x_n)\)</span> in a window <span class="math inline">\(\mathcal{D}\)</span>, the kernal estimate of intensity is <span class="math display">\[\hat{\lambda}(x) = \sum_{i = 1}^{n}\kappa(x - x_i)\epsilon(x, xi),\]</span> such that <span class="math inline">\(\kappa(x)\)</span> is the smoothing kernel and <span class="math inline">\(\epsilon(u, v)\)</span> is a correction for edge effects.</p>
+</blockquote>
+<p>The kernel <span class="math inline">\(\kappa(x)\)</span> must be a probability density, and the standard deviation of the kernel is the <strong>smoothing bandwidth</strong>.</p>
+<p>A larger bandwidth results in a smoother estimated process. Also, the choice of bandwidth involves a trade-off between bias as variance; typically, as the the bandwidth increases, the bias increases and the variance decreases.</p>
+<p>In <code>spatstat</code>, we can use the <code>density.ppp()</code> function for kernel estimation. However, we have to manually set the smoothing bandwidth.</p>
+<pre class="r"><code>pp &lt;- rpoint(n = 250, f = f, win = w)
+
+par(mfrow = c(1, 4))
+plot(pp, main = &quot;&quot;)
+d1 &lt;- density.ppp(x = pp, sigma = 0.1)
+d2 &lt;- density.ppp(x = pp, sigma = 0.5)
+d3 &lt;- density.ppp(x = pp, sigma = 1.0)
+plot(d1, main = &quot;0.1&quot;, bbox)
+plot(d2, main = &quot;0.5&quot;)
+plot(d3, main = &quot;1.0&quot;) # Notice the plot scales are different</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-16-1.png" width="1440" /></p>
+<p>However, we can use a “likelihood cross-validation method” to determine <code>sigma</code>. For instance, we can use the <code>bw.ppl</code> function to do so. Also, we can apply an edge correction (<code>diggle = TRUE</code>).</p>
+<pre class="r"><code>(sigma &lt;- bw.ppl(X = pp))</code></pre>
+<pre><code>##     sigma 
+## 0.2029696</code></pre>
+<pre class="r"><code>d1 &lt;- density.ppp(x = pp, sigma = sigma)
+d2 &lt;- density.ppp(x = pp, sigma = sigma, diggle = T)
+par(mfrow = c(1, 2))
+plot(d1, main = &quot;No edge correction&quot;)
+plot(d2, main = &quot;Edge Correction&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>Also, we can compute <span class="math inline">\(\mathbb{E}[\#(\xi \cap \text{D})]\)</span> as follows</p>
+<pre class="r"><code># Compute the integral \int_D \lambda(x)dx numerically.
+n_points &lt;- function (d) {
+  total_area &lt;- diff(d$xrange) * diff(d$yrange)
+  pixel_area &lt;- total_area / prod(d$dim)
+  sum(d$v * pixel_area)
+}
+
+n_points(d1)</code></pre>
+<pre><code>## [1] 240.7121</code></pre>
+<pre class="r"><code>n_points(d2)</code></pre>
+<pre><code>## [1] 250</code></pre>
+</div>
+</div>
+</div>
+<div id="point-process-models" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Point Process Models</h1>
+<p>From this point on, we will assume a parametric model that describes the point process dynamics. This will allow us to test for the effect of covariates, compute uncertainty, compare models, etc.</p>
+<div id="poisson-point-process" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Poisson Point Process</h2>
+<p>A very important model for point process analysis is the <strong>Poisson process</strong>. Such a modeling approach gives access to a wide variety of powerful statistical techniques, and <strong>will be used as a building block for more complex models</strong>.</p>
+<blockquote>
+<p>A point process <span class="math inline">\(\xi\)</span> defined on <span class="math inline">\(\mathcal{D}\)</span> is a <strong>Poisson point process</strong> with intensity function <span class="math inline">\(\lambda(x)\)</span> if the following properties are satisfied</p>
+<ol style="list-style-type: decimal">
+<li><p>For any bounded <span class="math inline">\(\text{D} \subseteq \mathcal{D}\)</span>, <span class="math inline">\(\mathcal{N}(\text{D}) \sim \text{Poisson}(\int_{\text{D}}\lambda(x)dx)\)</span>.</p></li>
+<li><p>For any bounded <span class="math inline">\(\text{D} \subseteq \mathcal{D}\)</span> and <span class="math inline">\(n \in \mathbb{N}\)</span>, conditional on <span class="math inline">\(\mathcal{N}(\text{D}) = n\)</span>, points in <span class="math inline">\(\xi \cap \text{D}\)</span> are independent and identically distributed with intensity proportional to <span class="math inline">\(\lambda(x)\)</span>.</p></li>
+</ol>
+</blockquote>
+<p>We can include a covariates into the Poisson point process by setting the intensity function as follows <span class="math display">\[\lambda(x) = \exp\{\alpha + \beta \cdot \text{z}(x)\},\]</span> where <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span> are coefficients to be estimated, and <span class="math inline">\(\text{z}(x)\)</span> is a spatial covariate.</p>
+<p>To fit such a model in <code>spatstat</code>, we can use the function <code>ppm(X ~ 1 + cov, ...)</code>, such that <code>X</code> is the point pattern, and <code>1 + cov</code> specifies the <strong>logarithm</strong> of the intensity function for such a model.</p>
+<div id="example-1" class="section level3" number="3.1.1">
+<h3><span class="header-section-number">3.1.1</span> Example 1</h3>
+<p>As a first example, we will work with the “Tropical rain forest trees” data. However, now, we will analyze another covariate named <code>grad</code>. Similar to before,</p>
+<pre class="r"><code>bei</code></pre>
+<pre><code>## Planar point pattern: 3604 points
+## window: rectangle = [0, 1000] x [0, 500] metres</code></pre>
+<pre class="r"><code>plot(bei.extra$grad, main = &quot;Tropical rain forest trees (Elevation Gradient)&quot;)
+plot(bei, add = T, pch = 19)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<p>First, we will fit a model with no covariates. In other words, we will assume a homogeneous Poisson process.</p>
+<pre class="r"><code>fit1 &lt;- ppm(bei ~ 1)
+fit1</code></pre>
+<pre><code>## Stationary Poisson process
+## Intensity: 0.007208
+##              Estimate       S.E.   CI95.lo   CI95.hi Ztest      Zval
+## log(lambda) -4.932564 0.01665742 -4.965212 -4.899916   *** -296.1182</code></pre>
+<p>From the above fitted model, notice that we have an estimate for the intercept <span class="math inline">\(\alpha\)</span>, as well as <span class="math inline">\(\hat{\lambda}\)</span>. In particular, we can say that we expect to observe <span class="math inline">\(\hat{\lambda} = 0.007208\)</span> trees per square meter.</p>
+<p>Alternatively, we can fit a model with covariates.</p>
+<pre class="r"><code>fit2 &lt;- ppm(bei ~ 1 + grad, data = bei.extra)
+fit2</code></pre>
+<pre><code>## Nonstationary Poisson process
+## 
+## Log intensity:  ~1 + grad
+## 
+## Fitted trend coefficients:
+## (Intercept)        grad 
+##   -5.391053    5.026710 
+## 
+##              Estimate       S.E.   CI95.lo   CI95.hi Ztest      Zval
+## (Intercept) -5.391053 0.03001787 -5.449887 -5.332219   *** -179.5948
+## grad         5.026710 0.24534296  4.545847  5.507573   ***   20.4885</code></pre>
+<p>From the fitted model, we can say that <span class="math inline">\(\hat{\lambda}(x) = \exp\{-5.39 + 5.02 \cdot \texttt{grad}(x)\}.\)</span> In that case, the expected number of trees per square meter on a level surface is <span class="math inline">\(\exp\{-5.39\} = 0.004559\)</span> (or <span class="math inline">\(45.59\)</span> trees per hectare).</p>
+<p>To see how the intensity function varies with <code>grad</code>, we can use the <code>effectfun()</code> function.</p>
+<pre class="r"><code>plot(effectfun(model = fit2, covname = &quot;grad&quot;, se.fit = T))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<p>Also, we can plot to predicted intensity process for all locations.</p>
+<pre class="r"><code>plot(fit2, se = F)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+</div>
+<div id="example-2" class="section level3" number="3.1.2">
+<h3><span class="header-section-number">3.1.2</span> Example 2</h3>
+<p>However, if no covariates are available, and if we suspect that the process is non-homogeneous, we can use the Cartesian coordinates as covariates. For instance, let’s analyze the point pattern that records the location of “Japanese black pines” in a square sampling region.</p>
+<pre class="r"><code># ?residualspaper # From Baddeley et al (2005).
+jpines &lt;- residualspaper[[&quot;Fig1&quot;]] 
+jpines</code></pre>
+<pre><code>## Planar point pattern: 204 points
+## window: rectangle = [0, 10] x [0, 10] metres</code></pre>
+<pre class="r"><code>plot(jpines, pch = 19, cex = 1.25, main = &quot;Japanese Pines&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
+<p>In that case, the correspond process seems to be non-homogeneous, but no spatial covariates are available. To overcome this issue, we can do as follows</p>
+<pre class="r"><code>(fit &lt;- ppm(jpines ~ x + y))</code></pre>
+<pre><code>## Nonstationary Poisson process
+## 
+## Log intensity:  ~x + y
+## 
+## Fitted trend coefficients:
+## (Intercept)           x           y 
+## 0.591839808 0.014329205 0.009643885 
+## 
+##                Estimate       S.E.     CI95.lo    CI95.hi Ztest      Zval
+## (Intercept) 0.591839808 0.18854120  0.22230585 0.96137376    ** 3.1390477
+## x           0.014329205 0.02427982 -0.03325837 0.06191678       0.5901693
+## y           0.009643885 0.02426889 -0.03792226 0.05721003       0.3973765</code></pre>
+<pre class="r"><code>plot(fit, se = F)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p>However, the estimated intensity does not seem to describe well the point patter. This is due to the rigid structure we imposed for the intensity function. In this case, <span class="math inline">\(\hat{\lambda}((x, y)) = \exp\{0.59 + 0.014x + 0.009y\}\)</span>.</p>
+<p>Alternatively, we can fit a model with log-cubic coordinates. To do this in <code>spatstat</code>, we can use the <code>polynom()</code> function.</p>
+<pre class="r"><code>(fit_cubic &lt;- ppm(jpines ~ polynom(x, y, 3)))</code></pre>
+<pre><code>## Nonstationary Poisson process
+## 
+## Log intensity:  ~x + y + I(x^2) + I(x * y) + I(y^2) + I(x^3) + I(x^2 * y) + I(x 
+## * y^2) + I(y^3)
+## 
+## Fitted trend coefficients:
+##  (Intercept)            x            y       I(x^2)     I(x * y)       I(y^2) 
+##  0.421606456  0.715190037 -0.661633148 -0.144427983  0.078944294  0.087888968 
+##       I(x^3)   I(x^2 * y)   I(x * y^2)       I(y^3) 
+##  0.007726421 -0.003839950 -0.003853943 -0.003208131 
+## 
+##                 Estimate        S.E.       CI95.lo      CI95.hi Ztest
+## (Intercept)  0.421606456 0.646106369 -0.8447387582  1.687951670      
+## x            0.715190037 0.354226830  0.0209182084  1.409461866     *
+## y           -0.661633148 0.302536675 -1.2545941349 -0.068672160     *
+## I(x^2)      -0.144427983 0.068892184 -0.2794541833 -0.009401783     *
+## I(x * y)     0.078944294 0.051849048 -0.0226779730  0.180566560      
+## I(y^2)       0.087888968 0.057799950 -0.0253968522  0.201174789      
+## I(x^3)       0.007726421 0.004283142 -0.0006683825  0.016121224      
+## I(x^2 * y)  -0.003839950 0.003530714 -0.0107600209  0.003080122      
+## I(x * y^2)  -0.003853943 0.003674725 -0.0110562721  0.003348386      
+## I(y^3)      -0.003208131 0.003606902 -0.0102775282  0.003861266      
+##                   Zval
+## (Intercept)  0.6525341
+## x            2.0190171
+## y           -2.1869519
+## I(x^2)      -2.0964350
+## I(x * y)     1.5225794
+## I(y^2)       1.5205717
+## I(x^3)       1.8039144
+## I(x^2 * y)  -1.0875846
+## I(x * y^2)  -1.0487705
+## I(y^3)      -0.8894424</code></pre>
+<pre class="r"><code>plot(fit_cubic, se = F, main = &quot;Fitted trend (log-cubic coordinates)&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<p>Finally, we can compare the two models using <code>anova.ppp()</code>. Here, the theoretically optimal technique is the “Likelihood Ratio Test” (see Section 10.3.2, “Spatial Point Patterns: Methodology and Applications with <code>R</code>”).</p>
+<pre class="r"><code>anova.ppm(fit, fit_cubic, test = &quot;LR&quot;)</code></pre>
+<pre><code>## Analysis of Deviance Table
+## 
+## Model 1: ~x + y   Poisson
+## Model 2: ~x + y + I(x^2) + I(x * y) + I(y^2) + I(x^3) + I(x^2 * y) + I(x * y^2) + I(y^3)      Poisson
+##   Npar Df Deviance  Pr(&gt;Chi)    
+## 1    3                          
+## 2   10  7   30.336 8.238e-05 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>In that case, I reject the null hypothesis that the simpler model is as good as the complex model. Thus, I would work with <code>fit_cubic</code> instead.</p>
+</div>
+<div id="back-to-example-1" class="section level3" number="3.1.3">
+<h3><span class="header-section-number">3.1.3</span> Back to Example 1</h3>
+<p>Getting back to Example 1, we can also fit a more complex model. In particular, we will do as follows,</p>
+<pre class="r"><code>(fit &lt;- ppm(bei ~ polynom(grad, elev, 2), data = bei.extra))</code></pre>
+<pre><code>## Nonstationary Poisson process
+## 
+## Log intensity:  ~grad + elev + I(grad^2) + I(grad * elev) + I(elev^2)
+## 
+## Fitted trend coefficients:
+##    (Intercept)           grad           elev      I(grad^2) I(grad * elev) 
+##  -1.550702e+02   5.106076e+01   2.025721e+00  -6.388416e+01  -2.054512e-01 
+##      I(elev^2) 
+##  -6.871527e-03 
+## 
+##                     Estimate         S.E.       CI95.lo       CI95.hi Ztest
+## (Intercept)    -1.550702e+02 8.4491373845 -1.716302e+02 -1.385102e+02   ***
+## grad            5.106076e+01 8.1476798566  3.509160e+01  6.702992e+01   ***
+## elev            2.025721e+00 0.1141637064  1.801964e+00  2.249477e+00   ***
+## I(grad^2)      -6.388416e+01 4.4682504606 -7.264177e+01 -5.512655e+01   ***
+## I(grad * elev) -2.054512e-01 0.0545076013 -3.122842e-01 -9.861830e-02   ***
+## I(elev^2)      -6.871527e-03 0.0003859161 -7.627908e-03 -6.115145e-03   ***
+##                      Zval
+## (Intercept)    -18.353381
+## grad             6.266908
+## elev            17.743998
+## I(grad^2)      -14.297354
+## I(grad * elev)  -3.769222
+## I(elev^2)      -17.805753</code></pre>
+<pre class="r"><code>pred &lt;- predict(fit)
+n_points(predict(fit))</code></pre>
+<pre><code>## [1] 3607.583</code></pre>
+<pre class="r"><code>M &lt;- persp(x = bei.extra$elev, colin = pred, colmap = topo.colors, shade = 0.4, theta = -55, phi = 25, expand = 6, box = F, apron = T, visible = T, main = &quot;Fitted trend (color)&quot;)
+perspPoints(bei, Z = bei.extra$elev, M = M, pch = 21, cex = 0.25)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
+<p>Also, we can get detailed summaries for the estimates.</p>
+<pre class="r"><code>coef(summary(fit))</code></pre>
+<pre><code>##                     Estimate         S.E.       CI95.lo       CI95.hi Ztest
+## (Intercept)    -1.550702e+02 8.4491373845 -1.716302e+02 -1.385102e+02   ***
+## grad            5.106076e+01 8.1476798566  3.509160e+01  6.702992e+01   ***
+## elev            2.025721e+00 0.1141637064  1.801964e+00  2.249477e+00   ***
+## I(grad^2)      -6.388416e+01 4.4682504606 -7.264177e+01 -5.512655e+01   ***
+## I(grad * elev) -2.054512e-01 0.0545076013 -3.122842e-01 -9.861830e-02   ***
+## I(elev^2)      -6.871527e-03 0.0003859161 -7.627908e-03 -6.115145e-03   ***
+##                      Zval
+## (Intercept)    -18.353381
+## grad             6.266908
+## elev            17.743998
+## I(grad^2)      -14.297354
+## I(grad * elev)  -3.769222
+## I(elev^2)      -17.805753</code></pre>
+</div>
+</div>
+<div id="cox-process" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Cox Process</h2>
+<p>Before, for Poisson point process, we assumed that points of the process are independent of each other. However, in most real applications, this might <strong>not</strong> be the case.</p>
+<p>To overcome this limitation, we will extend the Poisson process to what is called a <strong>Cox process</strong>. In a nutshell, <strong>the Cox process allows the modelling of the unobservable spatial heterogeneity</strong>.</p>
+<blockquote>
+<p>A Cox process can be seen as a doubly stochastic process since its intensity function is a random process itself. More specifically, <span class="math inline">\(\xi\)</span> is a Cox process driven by <span class="math inline">\(\Lambda(x)\)</span> if</p>
+<ol style="list-style-type: decimal">
+<li><p><span class="math inline">\(\{\Lambda(x); x \in \mathcal{D}\}\)</span> is a non-negative valued stochastic process.</p></li>
+<li><p>Conditional on <span class="math inline">\(\{\Lambda(x) = \lambda(x); \mathbf{x} \in \mathcal{D}\}\)</span>, <span class="math inline">\(\xi\)</span> is a Poisson process with intensity function <span class="math inline">\(\lambda(x)\)</span>.</p></li>
+</ol>
+</blockquote>
+<div id="log-gaussian-cox-process" class="section level3" number="3.2.1">
+<h3><span class="header-section-number">3.2.1</span> Log-Gaussian Cox Process</h3>
+<p>A particular case of a Cox process, named <strong>log-Gaussian Cox process</strong>, can be constructed by setting <span class="math inline">\(\log\{\Lambda(x)\} = \mu^{\star}(x) + \zeta(x)\)</span>, such that <span class="math inline">\(\mu(x) = \exp\{\mu^{\star}(x)\}\)</span> is possibly interpreted as the mean structure of <span class="math inline">\(\Lambda(x)\)</span>, and <span class="math inline">\(\zeta(x)\)</span> is a stationary Gaussian process, such that <span class="math inline">\(\mathbb{E}(\zeta(x)) = -\sigma^2/2\)</span>, <span class="math inline">\(\forall x\)</span>, and <span class="math inline">\(\text{Cov}(\zeta(x_1), \zeta(x_2)) = \phi(h) = \sigma^2 \rho(h)\)</span>, where <span class="math inline">\(h = ||x_1 - x_2||\)</span> and <span class="math inline">\(\sigma^2\)</span> is the variance of <span class="math inline">\(\zeta(x)\)</span> .</p>
+<p>For instance, the correlation structure can be set as a Matérn model, that is, <span class="math display">\[
+\rho(h) = \frac{1}{2^{\nu - 1}\Gamma(\nu)}(\kappa \cdot h)^{\nu} \,\text{K}_{\nu}(\kappa \cdot h),
+\]</span> such that <span class="math inline">\(\nu\)</span> and <span class="math inline">\(\kappa\)</span> are unknown parameters, and <span class="math inline">\(\text{K}_{\nu}(\cdot)\)</span> is a modified Bessel function of <span class="math inline">\(2^{\text{nd}}\)</span> order. For most implemented inference procedures, <span class="math inline">\(\nu\)</span> is manually defined, though, as the optimization routine might fail when dealing with the special functions.</p>
+<!-- In ``spatstat``, we will use the ``kppm()`` function with ``cluster = "LGCP"``.  -->
+<p><strong>Note:</strong> the “maximum likelihood” method for fitting a Poisson point process model is not possible to be extended to a LGCP model, as the likelihood is intractable. Thus, other methods are used for estimation.</p>
+<div id="inla-and-r-inla" class="section level4" number="3.2.1.1">
+<h4><span class="header-section-number">3.2.1.1</span> INLA and <code>R-INLA</code></h4>
+<p>In that case, we will use the Integrated Nested Laplace Approximation (INLA), implemented in the <code>R-INLA</code> package.</p>
+<p>In a nutshell, INLA is a method for approximating Bayesian inference in latent Gaussian models. In particular, it can be used to fit models of the form <span class="math display">\[
+        y_i|S(x_i), \theta \sim \pi(y_i|S(x_i), \theta), \text{ for } i \in \{1, \cdots, n\} \\
+        S(x)|\theta \sim \text{Normal}(\mu(\theta), Q(\theta)^{-1}) \\
+        \theta \sim \pi(\theta),
+\]</span> where <span class="math inline">\(y = (y_1, \ldots, y_n)\)</span> is the vector or observed values, <span class="math inline">\(x = (x_1, \ldots, x_n)\)</span> is a Gaussian random field, and <span class="math inline">\(\theta = (\theta_1, \ldots, \theta_k)\)</span>, for some <span class="math inline">\(k \in \mathbb{N}\)</span>, is a vector of hyperparameters. <span class="math inline">\(\mu(\theta)\)</span> and <span class="math inline">\(Q(\theta)\)</span> represent the mean vector and the precision matrix, respectively.</p>
+<div id="details" class="section level5" number="3.2.1.1.1">
+<h5><span class="header-section-number">3.2.1.1.1</span> Details</h5>
+<p>However, although we can use a Stochastic Partial Differential Equation (SPDE)-approach to fit LGCP models using INLA (as in <a href="https://arxiv.org/abs/1111.0641">this paper</a>), we will consider a partition of <span class="math inline">\(\mathcal{D}\)</span> given by cells <span class="math inline">\(c_{i, j}\)</span>, for some set of index <span class="math inline">\((i, j)\)</span>.</p>
+<p>First, recall that if <span class="math inline">\(\xi\)</span> is a LGCP, the mean number of events in a cell <span class="math inline">\(c_{ij}\)</span> is given by the integral of the intensity over the cell, that is, <span class="math inline">\(\Lambda_{i, j}(x) = \int_{c_{i,j}}\exp\{\zeta(x)\}dx\)</span>. Then, for sufficiently small cells, such an integral can be approximated by <span class="math inline">\(\Lambda_{i, j}(x) \approx |c_{i,j}|\exp\{\zeta(x)\}\)</span>, where <span class="math inline">\(|c_{i, j}|\)</span> is the area of the cell <span class="math inline">\(c_{i, j}\)</span>.</p>
+<p>Thus, conditional on the latent Gaussian field <span class="math inline">\(\zeta(x)\)</span>, the observed number of locations in the grid cell <span class="math inline">\(c_{i, j}\)</span>, <span class="math inline">\(\forall i, j\)</span>, are independent and Poisson distributed as follows <span class="math display">\[
+\mathcal{N}(c_{ij})|\zeta(x) \sim \text{Poisson}(|c_{i, j}| \cdot \exp\{\zeta(x)\}),
+\]</span> where <span class="math inline">\(\zeta(x)\)</span>, as before, is a Gaussian field (that might contain covariates information).</p>
+<p>As a reference for such an approach, one can refer to <a href="https://journal.r-project.org/archive/2021/RJ-2021-017/RJ-2021-017.pdf">this paper</a>.</p>
+</div>
+</div>
+<div id="example-3" class="section level4" number="3.2.1.2">
+<h4><span class="header-section-number">3.2.1.2</span> Example 3</h4>
+<p>For the first example, we will analyze the spatial locations of cases of cancer of the larynx and cancer of the lung.</p>
+<pre class="r"><code>?chorley
+chorley</code></pre>
+<pre><code>## Marked planar point pattern: 1036 points
+## Multitype, with levels = larynx, lung 
+## window: polygonal boundary
+## enclosing rectangle: [343.45, 366.45] x [410.41, 431.79] km</code></pre>
+<pre class="r"><code>plot(chorley, cols = c(&quot;red&quot;, rgb(0, 1, 0, 0.5)), pch = c(19, 4), cex = 0.75, main = &quot;Cancer cases&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
+<pre class="r"><code>lung &lt;- chorley[chorley$marks == &quot;lung&quot;]
+lung &lt;- ppp(x = lung$x, y = lung$y, window = lung$window)
+
+plot(lung, cols = &quot;green&quot;, pch = 4, cex = 0.75, main = &quot;Lung-cancer cases&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-32-2.png" width="672" /></p>
+<p>Based on the previous “Details” section, the step is creating a grid based study area.</p>
+<pre class="r"><code>resolution &lt;- 0.25
+map &lt;- as(st_as_sf(lung$window), &quot;Spatial&quot;) # Convert it to a ``SpatialPolygonsDataFrame`` object
+map$cancer &lt;- &quot;lung&quot;
+plot(map)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
+<pre class="r"><code>r &lt;- raster(map, resolution = resolution) # Create a ``raster`` object based on the map and resolution
+(n_row &lt;- nrow(r))</code></pre>
+<pre><code>## [1] 86</code></pre>
+<pre class="r"><code>(n_col &lt;- ncol(r))</code></pre>
+<pre><code>## [1] 92</code></pre>
+<p>Now, we have to count the number of observations within all cells and save it on the <code>r</code> object. To do so, we can create a <code>SpatialPoints</code> object based on the observations locations and use the <code>cellFromXY()</code> to count the number of points in each cell.</p>
+<pre class="r"><code>r[] &lt;- 0
+dpts &lt;- SpatialPoints(cbind(rev(lung$x), rev(lung$y))) # Convert the locations to a ``SpatialPoints`` object
+
+(tab &lt;- table(cellFromXY(r, dpts))) # Get the cell number, based on the ``raster`` object, for each observation, and table them.</code></pre>
+<pre><code>## 
+##  532  719 1046 1048 1136 1137 1138 1139 1228 1229 1230 1232 1245 1257 1320 1321 
+##    1    1    2    1    3    2    2    1    1    2    3    4    3    1    1    1 
+## 1322 1325 1338 1340 1341 1410 1412 1413 1414 1419 1420 1421 1429 1430 1432 1434 
+##    4    2    2    1    1    4    2    1    6    3    6    1    2    1    1    1 
+## 1502 1503 1504 1506 1507 1508 1512 1521 1522 1529 1530 1594 1596 1597 1598 1599 
+##    5    3    2    3    2    1    2    1    1    1    1    1    1    2    1    1 
+## 1600 1601 1602 1604 1605 1613 1614 1621 1622 1623 1624 1625 1627 1628 1636 1680 
+##    1    1    1    4    3    3    8    2    1    1    1    2    2    5    1    2 
+## 1692 1693 1694 1695 1696 1697 1705 1706 1715 1716 1724 1733 1771 1774 1784 1785 
+##    1    1    1    1    6    1    1    5    1    2    1    2    1    3    1    2 
+## 1786 1787 1788 1789 1797 1798 1799 1800 1801 1802 1809 1810 1811 1812 1876 1877 
+##    7    4    2    3    1    1    3    4    2    3    3    1    1    2    2    3 
+## 1878 1890 1891 1892 1895 1905 1951 1952 1955 1958 1969 1971 1974 1976 1979 1982 
+##    4    2    2    2    1    1    1    2    2    2    1    1    1    1    1    1 
+## 1983 1984 1985 1986 1987 1994 1995 2043 2044 2046 2066 2067 2068 2069 2072 2074 
+##    1    3    3    4    1    1    2    2    2    1    2    2    2    2    1    1 
+## 2076 2086 2088 2089 2131 2134 2136 2137 2138 2139 2146 2148 2160 2162 2163 2165 
+##    2    1    1    1    1    1    1    1    1    1    2    1    3    5    1    1 
+## 2167 2168 2169 2170 2174 2226 2231 2232 2235 2238 2239 2252 2253 2254 2260 2261 
+##    2   10    5    2    2    3    1    1    1    2    1    2    3    5    1    1 
+## 2262 2330 2336 2352 2353 2410 2422 2423 2437 2444 2446 2500 2502 2515 2516 2624 
+##    4    2    2    1    1    2    3    1    1    2    1    2    1    3    2    1 
+## 2640 2688 2691 2726 2778 2870 2871 2873 2970 2991 3002 3052 3053 3070 3072 3083 
+##    2    2    1    2    2    1    2    1    1    1    1    1    1    1    1    1 
+## 3086 3093 3097 3173 3174 3175 3186 3200 3235 3259 3262 3265 3266 3267 3268 3278 
+##    3    1    1    1    2    2    1    1    2    1    3    1    2    6    3    2 
+## 3325 3344 3351 3352 3353 3355 3356 3357 3358 3395 3418 3442 3443 3444 3445 3446 
+##    1    1    1    4    3    1    2    4    3    2    1    1    3    5    1    6 
+## 3447 3448 3449 3450 3451 3454 3462 3467 3474 3484 3531 3534 3535 3536 3539 3540 
+##    2    1    3    1    1    4    1    1    2    1    2    2    1    2    1    1 
+## 3541 3543 3546 3555 3621 3622 3623 3624 3626 3629 3630 3631 3632 3633 3634 3635 
+##    1    4    1    4    1    1    1    6    8    1    4    4    2    5    5    6 
+## 3636 3646 3647 3648 3662 3714 3716 3718 3719 3720 3721 3724 3725 3727 3728 3756 
+##    1    1    3    1    1    5    2    2    4    1    3    2    1    1    4    1 
+## 3757 3808 3809 3810 3811 3812 3813 3816 3831 3832 3840 3849 3850 3901 3902 3903 
+##    1    1    1    1    3    1    1    2    2    2    2    3    2    2    1    1 
+## 3922 3929 3973 3988 4015 4032 4160 4199 4202 4204 4208 4292 4354 4367 4374 4384 
+##    2    1    1    1    1    1    1    1    1    1    2    1    1    3    1    1 
+## 4389 4464 4476 4480 4556 4557 4568 4622 4623 4648 4650 4661 4666 4667 4714 4724 
+##    1    2    1    1    3    1    2    1    1    3    1    1    1    1    1    1 
+## 4741 4749 4752 4756 4757 4805 4806 4833 4836 4845 4847 4896 4898 4899 4908 4918 
+##    1    1    3    1    1    1    1    1    2    2    1    1    1    1    1    1 
+## 4925 4927 4928 4935 4936 4937 4938 4939 4940 5016 5022 5028 5029 5030 5031 5032 
+##    3    1    3    2    3    1    3    6    3    1    2    5    2    2    3    2 
+## 5108 5117 5118 5120 5121 5122 5123 5124 5210 5211 5213 5214 5215 5216 5276 5279 
+##    1    1    1    4    1    2    2    4    2    2    1    1    4    5    2    2 
+## 5280 5289 5302 5303 5304 5305 5306 5307 5308 5309 5370 5371 5391 5392 5393 5394 
+##    1    1    2    6    6    1    2    5    5    2    2    1    1    1    1    3 
+## 5395 5396 5397 5399 5400 5463 5464 5485 5486 5487 5488 5489 5490 5491 5492 5493 
+##    6    2    1    5    3    4    2    1    4   10    1    3    3    3    2    2 
+## 5554 5556 5557 5563 5577 5578 5579 5580 5581 5582 5583 5649 5667 5668 5669 5670 
+##    1    2    1    1    2    1    7    4    3    3    1    2    1    1    6    3 
+## 5671 5672 5676 5760 5761 5762 5764 5766 5835 5843 5856 5941 5948 6031 6034 6123 
+##    3    5    1    3    2    6    4    4    1    1    1    1    1    2    1    1 
+## 6204 6310 6328 6388 6395 6399 6400 6401 6402 6403 6418 6491 6492 6504 6581 6584 
+##    1    1    1    1    2    1    2    2    4    1    1    1    6    1    2    1 
+## 6585 6597 6600 6601 6602 6603 6683 6691 6692 6694 6770 6773 6778 6783 6784 6785 
+##    4    1    5    2    1    6    1    2    2    1    1    1    1    1    1    2 
+## 6786 6787 6875 6876 6952 6965 6966 6967 7040 7059 
+##    2    1    3    3    1    3    7    1    2    2</code></pre>
+<pre class="r"><code>r[as.numeric(names(tab))] &lt;- tab # Assign the number of observed events to the ``raster`` object
+plot(r)
+plot(map, add = T)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
+<p>Then, we can create a <code>grid</code> variable based on the <code>raster</code> object.</p>
+<pre class="r"><code>grid &lt;- rasterToPolygons(r) # Convert it to a ``SpatialPolygonsDataFrame`` object
+
+grid &lt;- grid[as.vector(matrix(1:nrow(grid), nrow = n_row, ncol = n_col, byrow = T)), ] # Rearrange the indices numbering
+
+grid$id &lt;- 1:nrow(grid)
+grid$Y &lt;- grid$layer
+grid$cellarea &lt;- resolution * resolution
+plot(grid)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-35-1.png" width="672" /></p>
+<p>Lastly, we just compute the intersection between <code>grid</code> and <code>map</code>. This can be done using the <code>raster::intersect()</code> function (from the <code>raster</code> package, as the namespace suggests).</p>
+<pre class="r"><code>gridmap &lt;- raster::intersect(x = grid, y = map) # Compute the intersection between 
+grid &lt;- grid[grid$id %in% gridmap$id, ]
+
+plot(grid)
+plot(map, border = &quot;red&quot;, lwd = 1, add = T)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<pre class="r"><code>summary(grid)</code></pre>
+<pre><code>## Object of class SpatialPolygonsDataFrame
+## Coordinates:
+##      min    max
+## x 343.45 366.45
+## y 410.29 431.79
+## Is projected: NA 
+## proj4string : [NA]
+## Data attributes:
+##      layer               id             Y              cellarea     
+##  Min.   : 0.0000   Min.   :  19   Min.   : 0.0000   Min.   :0.0625  
+##  1st Qu.: 0.0000   1st Qu.:2637   1st Qu.: 0.0000   1st Qu.:0.0625  
+##  Median : 0.0000   Median :4444   Median : 0.0000   Median :0.0625  
+##  Mean   : 0.1852   Mean   :4289   Mean   : 0.1852   Mean   :0.0625  
+##  3rd Qu.: 0.0000   3rd Qu.:5919   3rd Qu.: 0.0000   3rd Qu.:0.0625  
+##  Max.   :10.0000   Max.   :7896   Max.   :10.0000   Max.   :0.0625</code></pre>
+<p>Now that we have prepared all the data, we can fit the model using <code>R-INLA</code>. To do so, we have to specify a <code>formula</code> and fit the model using the <code>inla()</code> function.</p>
+<pre class="r"><code>formula &lt;- Y ~ 1 + f(id, model = &quot;matern2d&quot;, nrow = n_row, ncol = n_col, nu = 1) # Intercept + Matérn spatial random effects
+
+res &lt;- inla(formula,
+            family = &quot;poisson&quot;,
+            data = grid@data,
+            E = cellarea) # Acts like an offset</code></pre>
+<pre class="r"><code>summary(res)</code></pre>
+<pre><code>## 
+## Call:
+##    c(&quot;inla.core(formula = formula, family = family, contrasts = contrasts, 
+##    &quot;, &quot; data = data, quantiles = quantiles, E = E, offset = offset, &quot;, &quot; 
+##    scale = scale, weights = weights, Ntrials = Ntrials, strata = strata, 
+##    &quot;, &quot; lp.scale = lp.scale, link.covariates = link.covariates, verbose = 
+##    verbose, &quot;, &quot; lincomb = lincomb, selection = selection, control.compute 
+##    = control.compute, &quot;, &quot; control.predictor = control.predictor, 
+##    control.family = control.family, &quot;, &quot; control.inla = control.inla, 
+##    control.fixed = control.fixed, &quot;, &quot; control.mode = control.mode, 
+##    control.expert = control.expert, &quot;, &quot; control.hazard = control.hazard, 
+##    control.lincomb = control.lincomb, &quot;, &quot; control.update = 
+##    control.update, control.lp.scale = control.lp.scale, &quot;, &quot; 
+##    control.pardiso = control.pardiso, only.hyperparam = only.hyperparam, 
+##    &quot;, &quot; inla.call = inla.call, inla.arg = inla.arg, num.threads = 
+##    num.threads, &quot;, &quot; blas.num.threads = blas.num.threads, keep = keep, 
+##    working.directory = working.directory, &quot;, &quot; silent = silent, inla.mode 
+##    = inla.mode, safe = FALSE, debug = debug, &quot;, &quot; .parent.frame = 
+##    .parent.frame)&quot;) 
+## Time used:
+##     Pre = 2.63, Running = 80.3, Post = 0.127, Total = 83 
+## Fixed effects:
+##               mean    sd 0.025quant 0.5quant 0.975quant mode kld
+## (Intercept) -2.811 0.595     -4.127   -2.756     -1.795   NA   0
+## 
+## Random effects:
+##   Name     Model
+##     id Matern2D model
+## 
+## Model hyperparameters:
+##                   mean    sd 0.025quant 0.5quant 0.975quant mode
+## Precision for id  0.12 0.027      0.071    0.119      0.176   NA
+## Range for id     11.07 1.689      8.409   10.851     15.030   NA
+## 
+## Marginal log-Likelihood:  -1781.60 
+##  is computed 
+## Posterior summaries for the linear predictor and the fitted values are computed
+## (Posterior marginals needs also &#39;control.compute=list(return.marginals.predictor=TRUE)&#39;)</code></pre>
+<pre class="r"><code>grid$RE &lt;- res$summary.random$id[grid$id, &quot;mean&quot;]
+
+gridborder &lt;- gUnaryUnion(grid) # Plot the random effects using ``tmap`` package
+tm_shape(grid) + 
+  tm_polygons(col = c(&quot;RE&quot;),
+              style = &quot;cont&quot;, border.col = &quot;transparent&quot;, midpoint = NA) +
+  tm_shape(gridborder) + tm_borders() +
+  tm_facets(ncol = 1) + tm_legend(legend.position = c(&quot;left&quot;, &quot;bottom&quot;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
+<p>From the above map, we <strong>observe a non-constant pattern of the spatially structured random effect suggesting that the intensity of the process that generates the cancer-diagnosed patients’ locations may be affected by other spatial factors that have not been considered in the model</strong>.</p>
+<pre class="r"><code>cellarea   &lt;- resolution * resolution
+grid$Mean  &lt;- res$summary.fitted.values[, &quot;mean&quot;] * cellarea
+grid$Lower &lt;- res$summary.fitted.values[, &quot;0.025quant&quot;] * cellarea
+grid$Upper &lt;- res$summary.fitted.values[, &quot;0.975quant&quot;] * cellarea
+
+# Changing the margin size to accommodate the plot caption
+bbox_new &lt;- st_bbox(grid)
+xrange &lt;- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange &lt;- bbox_new$ymax - bbox_new$ymin # range of y values
+
+bbox_new[1] &lt;- bbox_new[1] - (0.25 * xrange)
+bbox_new &lt;- bbox_new %&gt;% st_as_sfc()
+
+# Main plot for the estimated intensity (along with a 95% equal-tail credible interval)
+tm_shape(grid, bbox = bbox_new) +
+  tm_polygons(col = c(&quot;Lower&quot;, &quot;Mean&quot;, &quot;Upper&quot;),
+              style = &#39;fixed&#39;, border.col = &quot;transparent&quot;,
+              breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2, 5, 10, ceiling(max(grid$Upper)))) +
+  tm_shape(gridborder) + tm_borders() +
+  tm_facets(ncol = 3) + tm_legend(legend.position = c(&quot;left&quot;, &quot;bottom&quot;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-41-1.png" width="1440" /></p>
+<p>Finally, from the above plot, we can identify (also accounting for the uncertainty) the areas with high incidence of lung-cancer patients (denoted by the estimated intensity process). Based on such information, policymakers can focus their resources on areas that matter the most when dealing with cancer management.</p>
+<hr />
+<p><strong>Note:</strong> One can also analyze a spatio-temporal point process in a similar manner. That is, letting the cells <span class="math inline">\(c_{(i, j), t}\)</span> depend also on time, we can include a temporal random effect in the <code>R-INLA</code> <code>formula</code> (e.g., <code>f(id_time, model = "ar1")</code>), with possibly space-time interaction terms (see <a href="https://onlinelibrary.wiley.com/doi/10.1002/1097-0258%2820000915/30%2919%3A17/18%3C2555%3A%3AAID-SIM587%3E3.0.CO%3B2-%23">this paper</a>). That is precisely what we will do in our next example.</p>
+</div>
+<div id="example-4" class="section level4" number="3.2.1.3">
+<h4><span class="header-section-number">3.2.1.3</span> Example 4</h4>
+<p>For the last example, we will analyze the location of terrorism attacks in a given country over the years. The two data objects (<code>terror_country.rds</code> and <code>area_country.rds</code>) can be downloaded from <a href="./data/terror_country.rds">here</a> and <a href="./data/area_country.rds">here</a>, respectively.</p>
+<pre class="r"><code>terror_country &lt;- readRDS(file = &quot;data/terror_country.rds&quot;)
+table(terror_country$country)</code></pre>
+<pre><code>## 
+##   AFG   AGO   ALB   ARE   ARG   ARM   AUS   AUT   AZE   BDI   BEL   BFA   BGD 
+##  4783     1     6     4    13     5    33     5     4   204     9    17   813 
+##   BGR   BIH   BLR   BRA   CAF   CAN   CHE   CHL   CHN   CIV   CMR   COD   COG 
+##    11     9     6    10   112    22     5    40    54    31   118   353     2 
+##   COL   CYP   CZE   DEU   DOM   DZA   ECU   EGY   ERI   ESP   EST   ETH   FIN 
+##   659    13    14   126     1   169     6   550    16    17     3    31    10 
+##   FRA   GBR   GEO   GHA   GIN   GNB   GRC   GTM   GUY   HND   HRV   HTI   HUN 
+##   106   330    20     2     4     2   217     4     1     4     5     1     3 
+##   IDN   IND   IRL   IRN   IRQ   ISL   ISR   ITA   JAM   JOR   JPN   KAZ   KEN 
+##   125  4190   133    61 15022     2   324    49     1    14    16    16   279 
+##   KGZ   KHM   KOR   KWT   LAO   LBN   LBR   LBY   LKA   MAR   MDA   MDG   MEX 
+##    10     2     2     3     2   219     2  1156    19     2     2     6    48 
+##   MKD   MLI   MMR   MNE   MOZ   MRT   MWI   MYS   NER   NGA   NIC   NLD   NOR 
+##     7   278   108     3    88     2     1    36    86  2458     1    12     4 
+##   NPL   NZL   PAK   PAN   PER   PHL   POL   PRT   PRY   PSE   QAT   RUS   RWA 
+##   224     2  8116     1    22  2328     2     2    49   527     1   707    26 
+##   SAU   SDN   SEN   SLE   SOM   SSD   SVK   SWE   SWZ   SYR   TCD   THA   TJK 
+##   153   381    10     1  2087   120     1    52     1  1398    26  1039     8 
+##   TKM   TTO   TUN   TUR   TWN   TZA   UGA   UKR   URY   USA   UZB   VEN   YEM 
+##     7     3    61   651     2    19    32  1373     1   188     1    14  1712 
+##   YUG   ZAF   ZWE 
+##    28    61     5</code></pre>
+<p>Aiming to have a larger data set, we analyze the country with the highest number of obseved events, i.e., <code>IRQ</code>. Also, we will analyze observed events that occurred from 2010 to 2015.</p>
+<pre class="r"><code>country_code &lt;- &quot;IRQ&quot;
+
+terror_country &lt;- terror_country[terror_country$country == country_code, ]
+terror_country &lt;- terror_country[(terror_country$iyear &gt;= 2010) &amp; (terror_country$iyear &lt;= 2015), ] 
+coordinates(terror_country) &lt;- c(&quot;longitude&quot;, &quot;latitude&quot;)
+proj4string(terror_country) &lt;- &quot;+proj=longlat&quot;
+
+area_country   &lt;- readRDS(file = &quot;data/area_country.rds&quot;)
+area_country   &lt;- area_country[area_country$sov_a3 == country_code, ]
+area_country &lt;- spTransform(x = area_country, CRSobj = CRS(&quot;+proj=longlat&quot;))
+
+plot(area_country, main = &quot;&quot;)
+plot(terror_country, add = T, col = &quot;green&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-43-1.png" width="672" /></p>
+<p>Now, given a partition, we can do as before, and count the number of events in each cell. However, notice that we also have to account for the variable <code>year</code> when doing so.</p>
+<pre class="r"><code>resolution &lt;- 0.5
+r &lt;- raster(area_country, resolution = resolution) 
+(n_row &lt;- nrow(r))</code></pre>
+<pre><code>## [1] 17</code></pre>
+<pre class="r"><code>(n_col &lt;- ncol(r))</code></pre>
+<pre><code>## [1] 20</code></pre>
+<pre class="r"><code>terror_country$year &lt;- terror_country$iyear - min(terror_country$iyear) + 1 
+n_years &lt;- length(unique(terror_country$year))
+
+tab &lt;- list()
+ras &lt;- list()
+grids &lt;- list()
+grids_map &lt;- list()
+
+par(mfrow = c(2, 3), mar=c(2, 2, 2, 6))
+for (y in 1:n_years) {
+  tab[[y]] &lt;- table(cellFromXY(r, terror_country[terror_country$year == y, ]))
+  ras[[y]] &lt;- r
+  ras[[y]][as.numeric(names(tab[[y]]))] &lt;- tab[[y]]
+  values(ras[[y]])[is.na(values(ras[[y]]))] &lt;- 0
+  grids[[y]] &lt;- rasterToPolygons(ras[[y]]) 
+  grids[[y]] &lt;- grids[[y]][as.vector(matrix(1:nrow(grids[[y]]), nrow = n_row, ncol = n_col, byrow = T)), ] 
+  grids[[y]]$id &lt;- 1:nrow(grids[[y]])
+  grids[[y]]$Y &lt;- grids[[y]]$layer
+  grids[[y]]$cellarea &lt;- resolution * resolution
+  grids_map[[y]] &lt;- raster::intersect(x = grids[[y]], y = area_country) 
+  grids[[y]] &lt;- grids[[y]][grids[[y]]$id %in% grids_map[[y]]$id, ]
+  
+  plot(ras[[y]], main = y)
+  plot(area_country, add = T)
+}</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-44-1.png" width="1440" /></p>
+<p>Then, we can create a data object with the extra <code>id_time</code> index.</p>
+<pre class="r"><code>for (y in 1:n_years) {
+  if (y == 1) {
+    data_inla &lt;- grids[[y]]@data
+  } else {
+    data_inla &lt;- rbind(data_inla, grids[[y]]@data)
+  }
+}
+data_inla &lt;- cbind(data_inla, id_time = rep(x = 1:n_years, each = nrow(grids[[1]])))
+data_inla[c(1:3, ((nrow(data_inla) - 2):nrow(data_inla))), ]</code></pre>
+<pre><code>##      layer  id Y cellarea id_time
+## 141      0   8 0     0.25       1
+## 161      0   9 0     0.25       1
+## 181      0  10 0     0.25       1
+## 2795     2 320 2     0.25       6
+## 2995     1 321 1     0.25       6
+## 3005     0 338 0     0.25       6</code></pre>
+<p>Finally, we can fit the model. In that case, we will define the latent Gaussian field <span class="math inline">\(\zeta(x, t)\)</span> as follows. For <span class="math inline">\(x_i \in \mathcal{D}\)</span> being an arbitrary location, we have <span class="math display">\[
+\zeta(x_i, t) = \alpha \zeta(x_i, t - 1) + \omega(x_i, t)
+\]</span> where <span class="math inline">\(|\alpha| &lt; 1\)</span> and <span class="math inline">\(\zeta(x, 1)\)</span> follows a stationary distribution of a first-order autoregressive process (AR1), namely <span class="math inline">\(\text{Normal}(0, \sigma^2_{\omega}/(1 - \alpha^2))\)</span>. And each <span class="math inline">\(\omega(x, t)\)</span> follows a zero-mean Gaussian distribution temporally independent but spatially dependent at each time. For details, see Chapter 7-9 of <a href="https://www.paulamoraga.com/book-geospatial/index.html">this book</a>.</p>
+<pre class="r"><code>formula &lt;- Y ~ 1 + f(id, 
+                     model = &quot;matern2d&quot;, 
+                     nrow = n_row, 
+                     ncol = n_col, 
+                     nu = 1, 
+                     group = id_time,
+                     control.group = list(model = &quot;ar1&quot;)) # IMPORTANT!
+                  
+res &lt;- inla(formula,
+            family = &quot;poisson&quot;,
+            data = data_inla,
+            E = resolution)</code></pre>
+<p>Lastly, as in the previous example, we can plot the estimated intensity for all years.</p>
+<pre class="r"><code>grid       &lt;- grids[[1]]
+cells_grid &lt;- nrow(grids[[1]])
+cellarea   &lt;- resolution * resolution
+
+grid$M1    &lt;- res$summary.fitted.values[, &quot;mean&quot;][1:cells_grid] * cellarea
+grid$M2    &lt;- res$summary.fitted.values[, &quot;mean&quot;][(cells_grid + 1):(cells_grid * 2)] * cellarea
+grid$M3    &lt;- res$summary.fitted.values[, &quot;mean&quot;][(cells_grid * 2 + 1):(cells_grid * 3)] * cellarea
+grid$M4    &lt;- res$summary.fitted.values[, &quot;mean&quot;][(cells_grid * 3 + 1):(cells_grid * 4)] * cellarea
+grid$M5    &lt;- res$summary.fitted.values[, &quot;mean&quot;][(cells_grid * 4 + 1):(cells_grid * 5)] * cellarea
+grid$M6    &lt;- res$summary.fitted.values[, &quot;mean&quot;][(cells_grid * 5 + 1):(cells_grid * 6)] * cellarea
+
+max_int    &lt;- ceiling(max(c(grid$M1, grid$M2, grid$M3, grid$M4, grid$M5, grid$M6)))
+max_int    &lt;- ceiling(max_int / 10) * 10
+
+bbox_new &lt;- st_bbox(grid)
+xrange &lt;- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange &lt;- bbox_new$ymax - bbox_new$ymin # range of y values
+
+bbox_new[1] &lt;- bbox_new[1] - (0.25 * xrange)
+bbox_new &lt;- bbox_new %&gt;% st_as_sfc()
+
+gridborder &lt;- gUnaryUnion(grid) 
+tm_shape(grid, bbox = bbox_new) +
+  tm_polygons(col = c(&quot;M1&quot;, &quot;M2&quot;, &quot;M3&quot;, &quot;M4&quot;, &quot;M5&quot;, &quot;M6&quot;),
+              style = &#39;fixed&#39;, border.col = &quot;transparent&quot;,
+              breaks = c(0, 1, 3, 5, 10, 20, 30, 50, max_int)) + 
+  tm_shape(gridborder) + tm_borders() +
+  tm_facets(ncol = 3) + tm_legend(legend.position = c(&quot;left&quot;, &quot;bottom&quot;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-49-1.png" width="1440" /></p>
+<p>As a final remark, such a model might take <strong>a long time</strong> to run.</p>
+<hr />
+</div>
+</div>
+</div>
+</div>
+<div id="other-references" class="section level1 unnumbered">
+<h1 class="unnumbered">Other References</h1>
+<p>In no particular order, the following books cover spatio(-temporal) point process modeling and other related topics.</p>
+<ul>
+<li><a href="https://www.routledge.com/Statistical-Inference-and-Simulation-for-Spatial-Point-Processes/Moller-Waagepetersen/p/book/9781584882657">Statistical Inference and Simulation for Spatial Point Processes</a> (A rigorous and mathematical introduction to spatial point processes.)</li>
+<li><a href="https://www.routledge.com/Spatial-Point-Patterns-Methodology-and-Applications-with-R/Baddeley-Rubak-Turner/p/book/9781482210200">Spatial Point Patterns: Methodology and Applications with R</a> (Spatial point process modeling with <code>spatstat</code>.)</li>
+<li><a href="https://www.amazon.com/Statistical-Spatio-Temporal-Monographs-Statistics-Probability/dp/1466560231">Statistical Analysis of Spatial and Spatio-Temporal Point Patterns</a> (Spatial and spatio-temporal point process modeling with applications in environmental problems.)</li>
+<li><a href="https://www.paulamoraga.com/book-geospatial/index.html">Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny</a> (Spatio-temporal statistical analysis using <code>R-INLA</code>.)</li>
+<li><a href="https://becarioprecario.bitbucket.io/spde-gitbook/">Advanced Spatial Modeling with Stochastic Partial Differential Equations Using R and INLA</a> (Spatio-temporal statistical analysis using <code>R-INLA</code>, but focused on SPDE-based models.)</li>
+</ul>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

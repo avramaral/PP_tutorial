@@ -1,0 +1,5 @@
+"0","points(terror_country, pch = 19, col = ""red"", cex = 0.5)
+"
+"2","Error in plot.xy(xy.coords(x, y), type = type, ...) : 
+  plot.new has not been called yet
+"

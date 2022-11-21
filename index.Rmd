@@ -1,0 +1,673 @@
+---
+title: "Spatio-temporal Point Pattern Data Analysis with Applications in Health Surveillance and Environmental Data"
+author: "André Victor Ribeiro Amaral"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r, echo = F}
+knitr::opts_knit$set(global.par = T)
+```
+
+```{r, echo = F}
+par(family = 'LM Roman 10',  mar = c(4, 4, 2, 2) + 0.1)
+```
+
+# Abstract {-}
+
+This tutorial aims to cover the basics of statistical point pattern data analysis using spatio-temporal point processes techniques for modeling disease-related and environmental data. In introductory spatial statistics courses, we usually study models to describe areal or geostatistical data. For the former, the domain is partitioned into a finite number of areas, and we model its spatial dependence by accounting for the neighbourhood structure. For the latter, we have a process defined on a continuous domain, but we only observe it at fixed and deterministic locations; therefore, our goal is to make inference for the non-observed regions. On the contrary, **in point pattern data, the observations consist of a finite random subset of the domain**; that is, the point locations are random, and, in that case, we are interested in modelling an underlying process that describes the intensity of the observed events. For instance, we can use point process models to describe the locations of infected individuals in a city, the position of a plant species in a large field, etc. A very simple point process model is the homogeneous Poisson process, and more elaborated models include the Cox process, Markov point process, etc. These models aim to capture different dependence structures, and inference techniques can be derived for each of them. This tutorial covers the introductory theory of point processes, and some important models for spatio-temporal problems. To do so, we will use the [`spatstat`](https://spatstat.org/) `R` package.
+
+<br />
+
+> This tutorial is based on the [Spatial Point Patterns: Methodology and Applications with `R`](https://www.routledge.com/Spatial-Point-Patterns-Methodology-and-Applications-with-R/Baddeley-Rubak-Turner/p/book/9781482210200) book.
+
+# Introduction 
+
+The first step is loading the `spatstat` (and others) package.
+```{r, result = "hide", message = F, warning = F}
+if (!require("spatstat")) {
+  install.packages("spatstat")
+  library("spatstat")
+}
+
+# Other packages
+library("spatstat.geom")
+library("inlabru")
+library("ggplot2")
+library("raster")
+library("rgeos")
+library("ggmap")
+library("INLA")
+library("tmap")
+library("sf")
+```
+
+From `spatstat` package, we can load different point pattern data sets. For instance, we can study the positions of 86 trees observed in a forest in New Zealand (area of approximately 153 by 85 feet). 
+```{r}
+# ?nztrees
+nztrees
+plot(x = nztrees, main = "New Zealand Trees", pch = 17,  col = "lightgreen", cols = "darkgreen", cex = 1.25)
+```
+
+Or the location of people sitting on a grass patch in Gordon Square, London.
+```{r}
+# ?gordon
+gordon
+plot(x = gordon, main = "People in Gordon Square",  col = "lightblue", cols = "blue", cex = 1.25)
+```
+
+Or the spatial locations of crimes reported in 2002, in an area of Chicago.
+
+```{r}
+# ?chicago
+chicago
+plot(chicago, main = "Chicago Crime Data")
+```
+
+Or a randomly generated (and uniformly distributed) point pattern in a "InCoB2022" window.
+
+```{r, fig.height = 2.5}
+set.seed(1)
+InCoB2022 <- readRDS(file = "data/InCoB2022.rds")
+class(InCoB2022)
+pp <- rpoint(n = 100, f = 1, win = InCoB2022)
+plot(pp, main = "Point pattern in the InCoB2022 window", pch = 21, col = "white", cols = "black", cex = 1.25)
+```
+
+Also, we can have **marked point patterns**. In that case, we also collect attributed for the observed locations. 
+
+For instance, we can have the location of trees of four species in Hyytiälä, Finland. Here, we have a **categorical variable** as an attribute.
+
+```{r}
+# ?hyytiala
+hyytiala
+hyytiala$marks
+plot(hyytiala, main = "Hyytiälä (Finland) Tress", col = "lightgreen", cols = "darkgreen")
+```
+
+Or the locations **and sizes** of Longleaf pine trees. Here, we have a **continuous variable** as an attribute.
+```{r}
+# ?longleaf
+longleaf
+longleaf$marks[1:20]
+plot(longleaf, main = "Longleaf Pine Tress", col = "gray95", cols = "darkgreen")
+```
+
+Finally, we may also have **covariates** for the observed region.
+
+For instance, we can observe the location of 3,605 trees in a tropical rain forest, but also analyze the **elevation (altitude)** in the study region.
+
+```{r, fig.height = 3.5}
+plot(bei.extra$elev, main = "Tropical rain forest trees (Altitude)")
+plot(bei, add = T, pch = 19)
+```
+
+# Basic Definitions 
+
+If we want to understand and analyze point patterns we have to define the concept of a **point process**.
+
+> Let $x \in \mathcal{D} \subseteq \mathbb{R}^2$, such that $\mathcal{D}$ is the study domain. Then, a (spatial) **point process** $\xi$ is defined as a locally finite random subset of $\mathcal{D}$; that is, $\#(\xi \cap \text{D})$ is finite for all bounded subsets $\text{D} \subseteq \mathcal{D}$, such that $\#(\text{A})$ denotes de cardinality of $\text{A}$.
+
+**Note:** A spatio-temporal point process can be similarly defined, such that $x \in \mathcal{D} \subseteq \mathbb{R}^2 \times \mathbb{R}$, where the third dimension denotes the time domain. Alternatively, one can also define a spatio-temporal point process as a marked one-dimensional process, where the marks denote the point locations in space. A deeper discussion on spatio-temporal point pattern modeling can be found in [this paper](https://www.sciencedirect.com/science/article/pii/S2211675316301130).
+
+In a nutshell, **a point process is random mechanism whose outcome is a point pattern**. In this regard, most of the time, **we are not interested in the observed points themselves, instead, we want to answer questions about the way the points were generated**.
+
+## Intensity
+
+For a (spatial) point process, we may define an **intensity function** as follows
+
+> Let $\lambda: \mathcal{D} \rightarrow [0, +\infty)$, such that $\int_{D}\lambda(x)dx < +\infty$, for all bounded $\text{D} \subseteq \mathcal{D}$. $\lambda(x)$ is the **intensity function** of a point process $\xi$, if $$\mathbb{E}[\#(\xi \cap \text{D})] = \int_{\text{D}}\lambda(x)dx, ~ \text{D} \subseteq \mathcal{D}.$$
+
+If $\lambda(x) = \lambda$, $\forall x$, that is, if it is a constant function, notice that $\mathbb{E}[\#(\xi \cap \text{D})] = \lambda \cdot |\text{D}|$. In that case, **$\lambda$ denotes the average number of points per unit area**. 
+
+Also, the intensity function is closely related to the probability density. 
+
+> If $\xi$ is a point process with intensity function $\lambda(x)$ defined on $\mathcal{D}$, then each individual point inside $\mathcal{D}$ has probability density $$f(x) = \frac{\lambda(x)}{\Lambda_{\mathcal{D}}},$$ where $$\Lambda_{\mathcal{D}} = \int_{\mathcal{D}}\lambda(x)dx.$$
+
+In ``spatstat`` we can generate a point pattern containing $n$ independent, identically distributed random points with intensity $f$ using the ``rpoint()`` function.
+
+```{r, fig.height = 4}
+f <- function (x, y) { (x^2 + y^2) }
+x <- seq(-1, 1, 0.05)
+y <- seq(-1, 1, 0.05)
+z <- outer(X = x, Y = y, FUN = f)
+w <- owin(xrange = c(-1, 1), yrange = c(-1, 1)) # Area: (2 units x 2 units)
+
+pp <- rpoint(n = 2500, f = f, win = w)
+
+par(mfrow = c(1, 2))
+persp(x, y, z, theta = 30)
+plot(pp, main = "")
+```
+
+```{r, echo = F}
+par(mfrow = c(1, 1))
+```
+
+### Estimating the intensity function
+
+If the intensity function is assumed to be constant, we say we have a **homogeneous process**. In that case, $\lambda$ can be estimated as $$\hat{\lambda} = \frac{\#(\mathbf{x})}{|\text{D}|},$$ where $\mathbf{x}$ is the point pattern data set, observed in a window $\text{D}$.
+
+In ``spatstat``, we can compute such a quantity using ``intensity.ppp()``.
+```{r}
+intensity.ppp(pp)
+```
+
+However, the homogeneous assumption may not hold. In that case, a simple way to check for non-homogeneity is to check whether regions of equal area contain roughly equal number of points. In ``spatstat``, we can do this using the ``quadratcount()`` function.
+
+```{r, fig.height = 4}
+q <- quadratcount(X = pp, nx = 5, ny = 5)
+plot(q, main = "")
+```
+
+By visually inspecting the counts, we could argue that the process might not be homogeneous. 
+
+However, to make it formal, we will conduct a statistical test. In particular, we will use a $\chi^2$ test for uniformity (i.e., testing homogeneity assuming independence). In ``spatstat``, we can use the ``quadrat.test()`` function.
+
+```{r}
+ts <- quadrat.test(X = pp, nx = 5, ny = 5)
+ts
+```
+As the p-value is too small (< 2.2e-16), we **reject** the null hypothesis that **the data pattern is a realization of a uniform Poisson point process** (more about that later).
+
+---
+
+If the process is assumed to non non-homogeneous, that is, if $\lambda(x)$ varies in space, the intensity function can be estimated non-parametrically by **kernel estimation**.
+
+> Given a point pattern $\mathbf{x} = (x_1, \cdots, x_n)$ in a window $\mathcal{D}$, the kernal estimate of intensity is $$\hat{\lambda}(x) = \sum_{i = 1}^{n}\kappa(x - x_i)\epsilon(x, xi),$$ such that $\kappa(x)$ is the smoothing kernel and $\epsilon(u, v)$ is a correction for edge effects.
+
+The kernel $\kappa(x)$ must be a probability density, and the standard deviation of the kernel is the **smoothing bandwidth**. 
+
+A larger bandwidth results in a smoother estimated process. Also, the choice of bandwidth involves a trade-off between bias as variance; typically, as the the bandwidth increases, the bias increases and the variance decreases.
+
+In ``spatstat``, we can use the ``density.ppp()`` function for kernel estimation. However, we have to manually set the smoothing bandwidth.
+
+```{r, fig.width = 15, fig.height = 3.5}
+pp <- rpoint(n = 250, f = f, win = w)
+
+par(mfrow = c(1, 4))
+plot(pp, main = "")
+d1 <- density.ppp(x = pp, sigma = 0.1)
+d2 <- density.ppp(x = pp, sigma = 0.5)
+d3 <- density.ppp(x = pp, sigma = 1.0)
+plot(d1, main = "0.1", bbox)
+plot(d2, main = "0.5")
+plot(d3, main = "1.0") # Notice the plot scales are different
+```
+
+```{r, echo = F}
+par(mfrow = c(1, 1))
+```
+
+However, we can use a "likelihood cross-validation method" to determine ``sigma``. For instance, we can use the ``bw.ppl`` function to do so. Also, we can apply an edge correction (``diggle = TRUE``).
+```{r, fig.height = 3}
+(sigma <- bw.ppl(X = pp))
+d1 <- density.ppp(x = pp, sigma = sigma)
+d2 <- density.ppp(x = pp, sigma = sigma, diggle = T)
+par(mfrow = c(1, 2))
+plot(d1, main = "No edge correction")
+plot(d2, main = "Edge Correction")
+```
+
+```{r, echo = F}
+par(mfrow = c(1, 1))
+```
+
+Also, we can compute $\mathbb{E}[\#(\xi \cap \text{D})]$ as follows
+```{r}
+# Compute the integral \int_D \lambda(x)dx numerically.
+n_points <- function (d) {
+  total_area <- diff(d$xrange) * diff(d$yrange)
+  pixel_area <- total_area / prod(d$dim)
+  sum(d$v * pixel_area)
+}
+
+n_points(d1)
+n_points(d2)
+```
+
+# Point Process Models
+
+From this point on, we will assume a parametric model that describes the point process dynamics. This will allow us to test for the effect of covariates, compute uncertainty, compare models, etc.
+
+## Poisson Point Process
+
+A very important model for point process analysis is the **Poisson process**. Such a modeling approach gives access to a wide variety of powerful statistical techniques, and **will be used as a building block for more complex models**.
+
+> A point process $\xi$ defined on $\mathcal{D}$ is a **Poisson point process** with intensity function $\lambda(x)$ if the following properties are satisfied
+>
+> 1. For any bounded $\text{D} \subseteq \mathcal{D}$, $\mathcal{N}(\text{D}) \sim \text{Poisson}(\int_{\text{D}}\lambda(x)dx)$.
+>
+> 2. For any bounded $\text{D} \subseteq \mathcal{D}$ and $n \in \mathbb{N}$, conditional on $\mathcal{N}(\text{D}) = n$, points in $\xi \cap \text{D}$ are independent and identically distributed with intensity proportional to $\lambda(x)$.
+
+We can include a covariates into the Poisson point process by setting the intensity function as follows $$\lambda(x) = \exp\{\alpha + \beta \cdot \text{z}(x)\},$$ where $\alpha$ and $\beta$ are coefficients to be estimated, and $\text{z}(x)$ is a spatial covariate. 
+
+To fit such a model in ``spatstat``, we can use the function ``ppm(X ~ 1 + cov, ...)``, such that ``X`` is the point pattern, and ``1 + cov`` specifies the **logarithm** of the intensity function for such a model.
+
+### Example 1
+
+As a first example, we will work with the "Tropical rain forest trees" data. However, now, we will analyze another covariate named ``grad``. Similar to before, 
+```{r, fig.height = 3.5}
+bei
+plot(bei.extra$grad, main = "Tropical rain forest trees (Elevation Gradient)")
+plot(bei, add = T, pch = 19)
+```
+
+First, we will fit a model with no covariates. In other words, we will assume a homogeneous Poisson process.
+```{r}
+fit1 <- ppm(bei ~ 1)
+fit1
+```
+
+From the above fitted model, notice that we have an estimate for the intercept $\alpha$, as well as $\hat{\lambda}$. In particular, we can say that we expect to observe $\hat{\lambda} = 0.007208$ trees per square meter.
+
+Alternatively, we can fit a model with covariates. 
+```{r}
+fit2 <- ppm(bei ~ 1 + grad, data = bei.extra)
+fit2
+```
+
+From the fitted model, we can say that $\hat{\lambda}(x) = \exp\{-5.39 + 5.02 \cdot \texttt{grad}(x)\}.$ In that case, the expected number of trees per square meter on a level surface is $\exp\{-5.39\} = 0.004559$ (or $45.59$ trees per hectare).
+
+To see how the intensity function varies with ``grad``, we can use the ``effectfun()`` function.
+
+```{r}
+plot(effectfun(model = fit2, covname = "grad", se.fit = T))
+```
+
+Also, we can plot to predicted intensity process for all locations.
+
+```{r, fig.height = 3.5}
+plot(fit2, se = F)
+```
+
+### Example 2
+
+However, if no covariates are available, and if we suspect that the process is non-homogeneous, we can use the Cartesian coordinates as covariates. For instance, let's analyze the point pattern that records the location of "Japanese black pines" in a square sampling region.
+
+```{r}
+# ?residualspaper # From Baddeley et al (2005).
+jpines <- residualspaper[["Fig1"]] 
+jpines
+plot(jpines, pch = 19, cex = 1.25, main = "Japanese Pines")
+```
+
+In that case, the correspond process seems to be non-homogeneous, but no spatial covariates are available. To overcome this issue, we can do as follows
+
+```{r}
+(fit <- ppm(jpines ~ x + y))
+plot(fit, se = F)
+```
+
+However, the estimated intensity does not seem to describe well the point patter. This is due to the rigid structure we imposed for the intensity function. In this case, $\hat{\lambda}((x, y)) = \exp\{0.59 + 0.014x + 0.009y\}$.
+
+Alternatively, we can fit a model with log-cubic coordinates. To do this in ``spatstat``, we can use the ``polynom()`` function.
+
+```{r}
+(fit_cubic <- ppm(jpines ~ polynom(x, y, 3)))
+plot(fit_cubic, se = F, main = "Fitted trend (log-cubic coordinates)")
+```
+
+Finally, we can compare the two models using ``anova.ppp()``. Here, the theoretically optimal technique is the "Likelihood Ratio Test" (see Section 10.3.2, "Spatial Point Patterns: Methodology and Applications with ``R``").
+
+```{r}
+anova.ppm(fit, fit_cubic, test = "LR")
+```
+In that case, I reject the null hypothesis that the simpler model is as good as the complex model. Thus, I would work with ``fit_cubic`` instead.
+
+### Back to Example 1
+
+Getting back to Example 1, we can also fit a more complex model. In particular, we will do as follows,
+
+```{r}
+(fit <- ppm(bei ~ polynom(grad, elev, 2), data = bei.extra))
+pred <- predict(fit)
+n_points(predict(fit))
+
+M <- persp(x = bei.extra$elev, colin = pred, colmap = topo.colors, shade = 0.4, theta = -55, phi = 25, expand = 6, box = F, apron = T, visible = T, main = "Fitted trend (color)")
+perspPoints(bei, Z = bei.extra$elev, M = M, pch = 21, cex = 0.25)
+```
+
+Also, we can get detailed summaries for the estimates.
+
+```{r}
+coef(summary(fit))
+```
+
+
+## Cox Process
+
+Before, for Poisson point process, we assumed that points of the process are independent of each other. However, in most real applications, this might **not** be the case. 
+
+To overcome this limitation, we will extend the Poisson process to what is called a **Cox process**. In a nutshell, **the Cox process allows the modelling of the unobservable spatial heterogeneity**.
+
+> A Cox process can be seen as a doubly stochastic process since its intensity function is a random process itself. More specifically, $\xi$ is a Cox process driven by $\Lambda(x)$ if
+>
+> 1. $\{\Lambda(x); x \in \mathcal{D}\}$ is a non-negative valued stochastic process.
+> 
+> 2. Conditional on $\{\Lambda(x) = \lambda(x); \mathbf{x} \in \mathcal{D}\}$, $\xi$ is a Poisson process with intensity function $\lambda(x)$.
+
+### Log-Gaussian Cox Process
+
+A particular case of a Cox process, named **log-Gaussian Cox process**, can be constructed by setting $\log\{\Lambda(x)\} = \mu^{\star}(x) + \zeta(x)$, such that $\mu(x) = \exp\{\mu^{\star}(x)\}$ is possibly interpreted as the mean structure of $\Lambda(x)$, and $\zeta(x)$ is a stationary Gaussian process, such that $\mathbb{E}(\zeta(x)) = -\sigma^2/2$, $\forall x$, and $\text{Cov}(\zeta(x_1), \zeta(x_2)) = \phi(h) = \sigma^2 \rho(h)$, where $h = ||x_1 - x_2||$ and $\sigma^2$ is the variance of $\zeta(x)$ .
+
+
+For instance, the correlation structure can be set as a Matérn model, that is, 
+$$
+\rho(h) = \frac{1}{2^{\nu - 1}\Gamma(\nu)}(\kappa \cdot h)^{\nu} \,\text{K}_{\nu}(\kappa \cdot h),
+$$
+such that $\nu$ and $\kappa$ are unknown parameters, and $\text{K}_{\nu}(\cdot)$ is a modified Bessel function of $2^{\text{nd}}$ order. For most implemented inference procedures, $\nu$ is manually defined, though, as the optimization routine might fail when dealing with the special functions.
+
+<!-- In ``spatstat``, we will use the ``kppm()`` function with ``cluster = "LGCP"``.  -->
+
+**Note:** the "maximum likelihood" method for fitting a Poisson point process model is not possible to be extended to a LGCP model, as the likelihood is intractable. Thus, other methods are used for estimation.
+
+#### INLA and ``R-INLA``
+
+In that case, we will use the Integrated Nested Laplace Approximation (INLA), implemented in the ``R-INLA`` package. 
+
+In a nutshell, INLA is a method for approximating Bayesian inference in latent Gaussian models. In particular, it can be used to fit models of the form
+$$
+		y_i|S(x_i), \theta \sim \pi(y_i|S(x_i), \theta), \text{ for } i \in \{1, \cdots, n\} \\
+		S(x)|\theta \sim \text{Normal}(\mu(\theta), Q(\theta)^{-1}) \\
+		\theta \sim \pi(\theta),
+$$
+where $y = (y_1, \ldots, y_n)$ is the vector or observed values, $x = (x_1, \ldots, x_n)$ is a Gaussian random field, and $\theta = (\theta_1, \ldots, \theta_k)$, for some $k \in \mathbb{N}$, is a vector of hyperparameters. $\mu(\theta)$ and $Q(\theta)$ represent the mean vector and the precision matrix,
+respectively.
+
+##### Details
+
+However, although we can use a Stochastic Partial Differential Equation (SPDE)-approach to fit LGCP models using INLA (as in [this paper](https://arxiv.org/abs/1111.0641)), we will consider a partition of $\mathcal{D}$ given by cells $c_{i, j}$, for some set of index $(i, j)$.
+
+First, recall that if $\xi$ is a LGCP, the mean number of events in a cell $c_{ij}$ is given by the integral of the intensity over the cell, that is, $\Lambda_{i, j}(x) = \int_{c_{i,j}}\exp\{\zeta(x)\}dx$. Then, for sufficiently small cells, such an integral can be approximated by $\Lambda_{i, j}(x) \approx |c_{i,j}|\exp\{\zeta(x)\}$, where $|c_{i, j}|$ is the area of the cell $c_{i, j}$.
+
+Thus, conditional on the latent Gaussian field $\zeta(x)$, the observed number of locations in the grid cell $c_{i, j}$, $\forall i, j$, are independent and Poisson distributed as follows
+$$
+\mathcal{N}(c_{ij})|\zeta(x) \sim \text{Poisson}(|c_{i, j}| \cdot \exp\{\zeta(x)\}),
+$$
+where $\zeta(x)$, as before, is a Gaussian field (that might contain covariates information). 
+
+As a reference for such an approach, one can refer to [this paper](https://journal.r-project.org/archive/2021/RJ-2021-017/RJ-2021-017.pdf).
+
+#### Example 3
+
+For the first example, we will analyze the spatial locations of cases of cancer of the larynx and cancer of the lung.
+
+```{r, warning = F}
+?chorley
+chorley
+plot(chorley, cols = c("red", rgb(0, 1, 0, 0.5)), pch = c(19, 4), cex = 0.75, main = "Cancer cases")
+
+lung <- chorley[chorley$marks == "lung"]
+lung <- ppp(x = lung$x, y = lung$y, window = lung$window)
+
+plot(lung, cols = "green", pch = 4, cex = 0.75, main = "Lung-cancer cases")
+```
+
+Based on the previous "Details" section, the step is creating a grid based study area.
+
+```{r}
+resolution <- 0.25
+map <- as(st_as_sf(lung$window), "Spatial") # Convert it to a ``SpatialPolygonsDataFrame`` object
+map$cancer <- "lung"
+plot(map)
+
+r <- raster(map, resolution = resolution) # Create a ``raster`` object based on the map and resolution
+(n_row <- nrow(r))
+(n_col <- ncol(r))
+```
+
+Now, we have to count the number of observations within all cells and save it on the ``r`` object. To do so, we can create a ``SpatialPoints`` object based on the observations locations and use the ``cellFromXY()`` to count the number of points in each cell. 
+```{r}
+r[] <- 0
+dpts <- SpatialPoints(cbind(rev(lung$x), rev(lung$y))) # Convert the locations to a ``SpatialPoints`` object
+
+(tab <- table(cellFromXY(r, dpts))) # Get the cell number, based on the ``raster`` object, for each observation, and table them.
+
+r[as.numeric(names(tab))] <- tab # Assign the number of observed events to the ``raster`` object
+plot(r)
+plot(map, add = T)
+```
+
+Then, we can create a ``grid`` variable based on the ``raster`` object. 
+
+```{r}
+grid <- rasterToPolygons(r) # Convert it to a ``SpatialPolygonsDataFrame`` object
+
+grid <- grid[as.vector(matrix(1:nrow(grid), nrow = n_row, ncol = n_col, byrow = T)), ] # Rearrange the indices numbering
+
+grid$id <- 1:nrow(grid)
+grid$Y <- grid$layer
+grid$cellarea <- resolution * resolution
+plot(grid)
+```
+
+Lastly, we just compute the intersection between ``grid`` and ``map``. This can be done using the ``raster::intersect()`` function (from the ``raster`` package, as the namespace suggests).
+
+```{r, message = F}
+gridmap <- raster::intersect(x = grid, y = map) # Compute the intersection between 
+grid <- grid[grid$id %in% gridmap$id, ]
+
+plot(grid)
+plot(map, border = "red", lwd = 1, add = T)
+
+summary(grid)
+```
+
+Now that we have prepared all the data, we can fit the model using ``R-INLA``. To do so, we have to specify a ``formula`` and fit the model using the ``inla()`` function.
+
+```{r, eval = F}
+formula <- Y ~ 1 + f(id, model = "matern2d", nrow = n_row, ncol = n_col, nu = 1) # Intercept + Matérn spatial random effects
+
+res <- inla(formula,
+            family = "poisson",
+            data = grid@data,
+            E = cellarea) # Acts like an offset
+```
+
+```{r, echo = F}
+res <- readRDS(file = "data/inla_res.RDS")
+```
+
+
+```{r}
+summary(res)
+```
+
+```{r, warning = F}
+grid$RE <- res$summary.random$id[grid$id, "mean"]
+
+gridborder <- gUnaryUnion(grid) # Plot the random effects using ``tmap`` package
+tm_shape(grid) + 
+  tm_polygons(col = c("RE"),
+              style = "cont", border.col = "transparent", midpoint = NA) +
+  tm_shape(gridborder) + tm_borders() +
+  tm_facets(ncol = 1) + tm_legend(legend.position = c("left", "bottom"))
+```
+
+From the above map, we **observe a non-constant pattern of the spatially structured random effect suggesting that the intensity of the process that generates the cancer-diagnosed patients' locations may be affected by other spatial factors that have not been considered in the model**.
+
+```{r, warning = F, fig.width = 15, fig.height = 3.5}
+cellarea   <- resolution * resolution
+grid$Mean  <- res$summary.fitted.values[, "mean"] * cellarea
+grid$Lower <- res$summary.fitted.values[, "0.025quant"] * cellarea
+grid$Upper <- res$summary.fitted.values[, "0.975quant"] * cellarea
+
+# Changing the margin size to accommodate the plot caption
+bbox_new <- st_bbox(grid)
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+bbox_new[1] <- bbox_new[1] - (0.25 * xrange)
+bbox_new <- bbox_new %>% st_as_sfc()
+
+# Main plot for the estimated intensity (along with a 95% equal-tail credible interval)
+tm_shape(grid, bbox = bbox_new) +
+  tm_polygons(col = c("Lower", "Mean", "Upper"),
+              style = 'fixed', border.col = "transparent",
+              breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2, 5, 10, ceiling(max(grid$Upper)))) +
+  tm_shape(gridborder) + tm_borders() +
+  tm_facets(ncol = 3) + tm_legend(legend.position = c("left", "bottom"))
+```
+
+Finally, from the above plot, we can identify (also accounting for the uncertainty) the areas with high incidence of lung-cancer patients (denoted by the estimated intensity process). Based on such information, policymakers can focus their resources on areas that matter the most when dealing with cancer management.
+
+---
+
+**Note:** One can also analyze a spatio-temporal point process in a similar manner. That is, letting the cells $c_{(i, j), t}$ depend also on time, we can include a temporal random effect in the ``R-INLA`` ``formula`` (e.g., ``f(id_time, model = "ar1")``), with possibly space-time interaction terms (see [this paper](https://onlinelibrary.wiley.com/doi/10.1002/1097-0258%2820000915/30%2919%3A17/18%3C2555%3A%3AAID-SIM587%3E3.0.CO%3B2-%23)). That is precisely what we will do in our next example.
+
+#### Example 4
+
+For the last example, we will analyze the location of terrorism attacks in a given country over the years. The two data objects (``terror_country.rds`` and ``area_country.rds``) can be downloaded from [here](./data/terror_country.rds) and [here](./data/area_country.rds), respectively.
+
+```{r, warning = F}
+terror_country <- readRDS(file = "data/terror_country.rds")
+table(terror_country$country)
+```
+
+Aiming to have a larger data set, we analyze the country with the highest number of obseved events, i.e., ``IRQ``. Also, we will analyze observed events that occurred from 2010 to 2015.
+
+```{r, warning = F}
+country_code <- "IRQ"
+
+terror_country <- terror_country[terror_country$country == country_code, ]
+terror_country <- terror_country[(terror_country$iyear >= 2010) & (terror_country$iyear <= 2015), ] 
+coordinates(terror_country) <- c("longitude", "latitude")
+proj4string(terror_country) <- "+proj=longlat"
+
+area_country   <- readRDS(file = "data/area_country.rds")
+area_country   <- area_country[area_country$sov_a3 == country_code, ]
+area_country <- spTransform(x = area_country, CRSobj = CRS("+proj=longlat"))
+
+plot(area_country, main = "")
+plot(terror_country, add = T, col = "green")
+```
+
+Now, given a partition, we can do as before, and count the number of events in each cell. However, notice that we also have to account for the variable ``year`` when doing so.
+
+```{r, warning = F, fig.height = 9, fig.width = 15}
+resolution <- 0.5
+r <- raster(area_country, resolution = resolution) 
+(n_row <- nrow(r))
+(n_col <- ncol(r))
+
+terror_country$year <- terror_country$iyear - min(terror_country$iyear) + 1 
+n_years <- length(unique(terror_country$year))
+
+tab <- list()
+ras <- list()
+grids <- list()
+grids_map <- list()
+
+par(mfrow = c(2, 3), mar=c(2, 2, 2, 6))
+for (y in 1:n_years) {
+  tab[[y]] <- table(cellFromXY(r, terror_country[terror_country$year == y, ]))
+  ras[[y]] <- r
+  ras[[y]][as.numeric(names(tab[[y]]))] <- tab[[y]]
+  values(ras[[y]])[is.na(values(ras[[y]]))] <- 0
+  grids[[y]] <- rasterToPolygons(ras[[y]]) 
+  grids[[y]] <- grids[[y]][as.vector(matrix(1:nrow(grids[[y]]), nrow = n_row, ncol = n_col, byrow = T)), ] 
+  grids[[y]]$id <- 1:nrow(grids[[y]])
+  grids[[y]]$Y <- grids[[y]]$layer
+  grids[[y]]$cellarea <- resolution * resolution
+  grids_map[[y]] <- raster::intersect(x = grids[[y]], y = area_country) 
+  grids[[y]] <- grids[[y]][grids[[y]]$id %in% grids_map[[y]]$id, ]
+  
+  plot(ras[[y]], main = y)
+  plot(area_country, add = T)
+}
+```
+
+```{r, echo = F}
+par(mfrow = c(1, 1))
+```
+
+Then, we can create a data object with the extra ``id_time`` index.
+
+```{r}
+for (y in 1:n_years) {
+  if (y == 1) {
+    data_inla <- grids[[y]]@data
+  } else {
+    data_inla <- rbind(data_inla, grids[[y]]@data)
+  }
+}
+data_inla <- cbind(data_inla, id_time = rep(x = 1:n_years, each = nrow(grids[[1]])))
+data_inla[c(1:3, ((nrow(data_inla) - 2):nrow(data_inla))), ]
+```
+
+Finally, we can fit the model. In that case, we will define the latent Gaussian field $\zeta(x, t)$ as follows. For $x_i \in \mathcal{D}$ being an arbitrary location, we have
+$$
+\zeta(x_i, t) = \alpha \zeta(x_i, t - 1) + \omega(x_i, t)
+$$
+where $|\alpha| < 1$ and $\zeta(x, 1)$ follows a stationary distribution of a first-order autoregressive process (AR1), namely $\text{Normal}(0, \sigma^2_{\omega}/(1 - \alpha^2))$. And each $\omega(x, t)$ follows a zero-mean Gaussian distribution temporally independent but spatially dependent at each time. For details, see Chapter 7-9 of [this book](https://www.paulamoraga.com/book-geospatial/index.html). 
+
+```{r, eval = F}
+formula <- Y ~ 1 + f(id, 
+                     model = "matern2d", 
+                     nrow = n_row, 
+                     ncol = n_col, 
+                     nu = 1, 
+                     group = id_time,
+                     control.group = list(model = "ar1")) # IMPORTANT!
+                  
+res <- inla(formula,
+            family = "poisson",
+            data = data_inla,
+            E = resolution)
+```
+
+```{r, echo = F}
+res <- readRDS(file = "data/res_st.rds")
+```
+
+Lastly, as in the previous example, we can plot the estimated intensity for all years.
+
+```{r, fig.width = 15, fig.height = 8, message = F, warning = F}
+grid       <- grids[[1]]
+cells_grid <- nrow(grids[[1]])
+cellarea   <- resolution * resolution
+
+grid$M1    <- res$summary.fitted.values[, "mean"][1:cells_grid] * cellarea
+grid$M2    <- res$summary.fitted.values[, "mean"][(cells_grid + 1):(cells_grid * 2)] * cellarea
+grid$M3    <- res$summary.fitted.values[, "mean"][(cells_grid * 2 + 1):(cells_grid * 3)] * cellarea
+grid$M4    <- res$summary.fitted.values[, "mean"][(cells_grid * 3 + 1):(cells_grid * 4)] * cellarea
+grid$M5    <- res$summary.fitted.values[, "mean"][(cells_grid * 4 + 1):(cells_grid * 5)] * cellarea
+grid$M6    <- res$summary.fitted.values[, "mean"][(cells_grid * 5 + 1):(cells_grid * 6)] * cellarea
+
+max_int    <- ceiling(max(c(grid$M1, grid$M2, grid$M3, grid$M4, grid$M5, grid$M6)))
+max_int    <- ceiling(max_int / 10) * 10
+
+bbox_new <- st_bbox(grid)
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+bbox_new[1] <- bbox_new[1] - (0.25 * xrange)
+bbox_new <- bbox_new %>% st_as_sfc()
+
+gridborder <- gUnaryUnion(grid) 
+tm_shape(grid, bbox = bbox_new) +
+  tm_polygons(col = c("M1", "M2", "M3", "M4", "M5", "M6"),
+              style = 'fixed', border.col = "transparent",
+              breaks = c(0, 1, 3, 5, 10, 20, 30, 50, max_int)) + 
+  tm_shape(gridborder) + tm_borders() +
+  tm_facets(ncol = 3) + tm_legend(legend.position = c("left", "bottom"))
+```
+
+As a final remark, such a model might take **a long time** to run. 
+
+---
+
+# Other References {-}
+
+In no particular order, the following books cover spatio(-temporal) point process modeling and other related topics.
+
+- [Statistical Inference and Simulation for Spatial Point Processes](https://www.routledge.com/Statistical-Inference-and-Simulation-for-Spatial-Point-Processes/Moller-Waagepetersen/p/book/9781584882657) (A rigorous and mathematical introduction to spatial point processes.)
+- [Spatial Point Patterns: Methodology and Applications with R](https://www.routledge.com/Spatial-Point-Patterns-Methodology-and-Applications-with-R/Baddeley-Rubak-Turner/p/book/9781482210200) (Spatial point process modeling with ``spatstat``.)
+- [Statistical Analysis of Spatial and Spatio-Temporal Point Patterns](https://www.amazon.com/Statistical-Spatio-Temporal-Monographs-Statistics-Probability/dp/1466560231) (Spatial and spatio-temporal point process modeling with applications in environmental problems.)
+- [Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny](https://www.paulamoraga.com/book-geospatial/index.html) (Spatio-temporal statistical analysis using ``R-INLA``.)
+- [Advanced Spatial Modeling with Stochastic Partial Differential Equations Using R and INLA](https://becarioprecario.bitbucket.io/spde-gitbook/) (Spatio-temporal statistical analysis using ``R-INLA``, but focused on SPDE-based models.)
+

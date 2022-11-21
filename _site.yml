@@ -1,0 +1,10 @@
+name: 'André Victor Ribeiro Amaral'
+output_dir: 'docs'
+navbar:
+  title: 'Point Pattern Data Analysis'
+  right:
+    - icon: fa-globe
+      href: https://avramaral.github.io/
+output:
+  html_document:
+    css: style.css

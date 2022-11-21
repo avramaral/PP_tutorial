@@ -1,0 +1,117 @@
+
+# Other packages
+library("spatstat.geom")
+library("ggplot2")
+library("raster")
+library("rgeos")
+library("ggmap")
+library("INLA")
+library("tmap")
+library("sf")
+
+#########################################
+
+# Rearrange the indices numbering
+
+terror_country <- readRDS(file = "data/terror_country.rds")
+table(terror_country$country)
+
+
+country_code <- "IRQ"
+
+terror_country <- terror_country[terror_country$country == country_code, ]
+terror_country <- terror_country[(terror_country$iyear >= 2010) & (terror_country$iyear <= 2015), ]
+coordinates(terror_country) <- c("longitude", "latitude")
+proj4string(terror_country) <- "+proj=longlat"
+
+area_country   <- readRDS(file = "data/area_country.rds")
+area_country   <- area_country[area_country$sov_a3 == country_code, ]
+area_country <- spTransform(x = area_country, CRSobj = CRS("+proj=longlat"))
+
+plot(area_country, main = "")
+
+
+resolution <- 0.5
+r <- raster(area_country, resolution = resolution) 
+(n_row <- nrow(r))
+(n_col <- ncol(r))
+
+terror_country$year <- terror_country$iyear - min(terror_country$iyear) + 1 
+n_years <- length(unique(terror_country$year))
+
+tab <- list()
+ras <- list()
+grids <- list()
+grids_map <- list()
+
+par(mfrow = c(2, 3))
+for (y in 1:n_years) {
+  tab[[y]] <- table(cellFromXY(r, terror_country[terror_country$year == y, ]))
+  ras[[y]] <- r
+  ras[[y]][as.numeric(names(tab[[y]]))] <- tab[[y]]
+  values(ras[[y]])[is.na(values(ras[[y]]))] <- 0
+  grids[[y]] <- rasterToPolygons(ras[[y]]) 
+  grids[[y]] <- grids[[y]][as.vector(matrix(1:nrow(grids[[y]]), nrow = n_row, ncol = n_col, byrow = T)), ] 
+  grids[[y]]$id <- 1:nrow(grids[[y]])
+  grids[[y]]$Y <- grids[[y]]$layer
+  grids[[y]]$cellarea <- resolution * resolution
+  grids_map[[y]] <- raster::intersect(x = grids[[y]], y = area_country) 
+  grids[[y]] <- grids[[y]][grids[[y]]$id %in% grids_map[[y]]$id, ]
+  
+  plot(ras[[y]], main = "")
+}
+
+for (y in 1:n_years) {
+  if (y == 1) {
+    data_inla <- grids[[y]]@data
+  } else {
+    data_inla <- rbind(data_inla, grids[[y]]@data)
+  }
+}
+data_inla <- cbind(data_inla, id_time = rep(x = 1:n_years, each = nrow(grids[[1]])))
+data_inla[c(1:3, ((nrow(data_inla) - 2):nrow(data_inla))), ]
+
+formula <- Y ~ 1 + f(id, 
+                     model = "matern2d", 
+                     nrow = n_row, 
+                     ncol = n_col, 
+                     nu = 1, 
+                     group = id_time,
+                     control.group = list(model = "ar1"))
+
+res <- inla(formula,
+            family = "poisson",
+            data = data_inla,
+            E = resolution)
+
+saveRDS(res, file = "data/res_st.rds")
+
+grid       <- grids[[1]]
+cells_grid <- nrow(grids[[1]])
+cellarea   <- resolution * resolution
+grid$M1    <- res$summary.fitted.values[, "mean"][1:cells_grid] * cellarea
+grid$M2    <- res$summary.fitted.values[, "mean"][(cells_grid + 1):(cells_grid * 2)] * cellarea
+grid$M3    <- res$summary.fitted.values[, "mean"][(cells_grid * 2 + 1):(cells_grid * 3)] * cellarea
+grid$M4    <- res$summary.fitted.values[, "mean"][(cells_grid * 3 + 1):(cells_grid * 4)] * cellarea
+grid$M5    <- res$summary.fitted.values[, "mean"][(cells_grid * 4 + 1):(cells_grid * 5)] * cellarea
+grid$M6    <- res$summary.fitted.values[, "mean"][(cells_grid * 5 + 1):(cells_grid * 6)] * cellarea
+max_int    <- ceiling(max(c(grid$M1, grid$M2, grid$M3, grid$M4, grid$M5, grid$M6)))
+max_int    <- ceiling(max_int / 10) * 10
+
+
+gridborder <- gUnaryUnion(grid) 
+tm_shape(grid, bbox = bbox_new) +
+  tm_polygons(col = c("M1", "M2", "M3", "M4", "M5", "M6"),
+              style = 'fixed', border.col = "transparent",
+              breaks = c(0, 1, 3, 5, 10, 20, 30, 50, max_int)) +
+  tm_shape(gridborder) + tm_borders() +
+  tm_facets(ncol = 3) + tm_legend(legend.position = c("left", "bottom"))
+
+
+
+
+
+
+
+
+
