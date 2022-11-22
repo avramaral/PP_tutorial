@@ -22,7 +22,7 @@ This tutorial aims to cover the basics of statistical point pattern data analysi
 
 <br />
 
-> This tutorial is based on the [Spatial Point Patterns: Methodology and Applications with `R`](https://www.routledge.com/Spatial-Point-Patterns-Methodology-and-Applications-with-R/Baddeley-Rubak-Turner/p/book/9781482210200) book.
+> The first part of this tutorial is based on the [Spatial Point Patterns: Methodology and Applications with `R`](https://www.routledge.com/Spatial-Point-Patterns-Methodology-and-Applications-with-R/Baddeley-Rubak-Turner/p/book/9781482210200) book. However, in the second part, we use ``R-INLA`` for LGCP inference.
 
 # Introduction 
 
@@ -666,8 +666,8 @@ As a final remark, such a model might take **a long time** to run.
 In no particular order, the following books cover spatio(-temporal) point process modeling and other related topics.
 
 - [Statistical Inference and Simulation for Spatial Point Processes](https://www.routledge.com/Statistical-Inference-and-Simulation-for-Spatial-Point-Processes/Moller-Waagepetersen/p/book/9781584882657) (A rigorous and mathematical introduction to spatial point processes.)
-- [Spatial Point Patterns: Methodology and Applications with R](https://www.routledge.com/Spatial-Point-Patterns-Methodology-and-Applications-with-R/Baddeley-Rubak-Turner/p/book/9781482210200) (Spatial point process modeling with ``spatstat``.)
+- [Spatial Point Patterns: Methodology and Applications with ``R``](https://www.routledge.com/Spatial-Point-Patterns-Methodology-and-Applications-with-R/Baddeley-Rubak-Turner/p/book/9781482210200) (Spatial point process modeling with ``spatstat``.)
 - [Statistical Analysis of Spatial and Spatio-Temporal Point Patterns](https://www.amazon.com/Statistical-Spatio-Temporal-Monographs-Statistics-Probability/dp/1466560231) (Spatial and spatio-temporal point process modeling with applications in environmental problems.)
-- [Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny](https://www.paulamoraga.com/book-geospatial/index.html) (Spatio-temporal statistical analysis using ``R-INLA``.)
-- [Advanced Spatial Modeling with Stochastic Partial Differential Equations Using R and INLA](https://becarioprecario.bitbucket.io/spde-gitbook/) (Spatio-temporal statistical analysis using ``R-INLA``, but focused on SPDE-based models.)
+- [Geospatial Health Data: Modeling and Visualization with ``R-INLA`` and ``Shiny``](https://www.paulamoraga.com/book-geospatial/index.html) (Spatio-temporal statistical analysis using ``R-INLA``.)
+- [Advanced Spatial Modeling with Stochastic Partial Differential Equations Using ``R`` and ``INLA``](https://becarioprecario.bitbucket.io/spde-gitbook/) (Spatio-temporal statistical analysis using ``R-INLA``, but focused on SPDE-based models.)
 
